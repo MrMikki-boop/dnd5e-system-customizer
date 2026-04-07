@@ -1,277 +1,285 @@
 <form class="sc-form" autocomplete="off">
 
-  {{!-- ═══════════════ ВКЛАДКИ ═══════════════ --}}
-  <nav class="sc-tabs tabs" data-group="sc-main">
-    <a class="item" data-tab="abilities"><i class="fas fa-fist-raised"></i> Характеристики</a>
-    <a class="item" data-tab="skills"><i class="fas fa-running"></i> Навыки</a>
-    <a class="item" data-tab="weapons"><i class="fas fa-sword"></i> Оружие</a>
-    <a class="item" data-tab="alignments"><i class="fas fa-yin-yang"></i> Мировоззрения</a>
-    <a class="item" data-tab="damage"><i class="fas fa-fire"></i> Типы урона</a>
-    <a class="item" data-tab="languages"><i class="fas fa-language"></i> Языки</a>
-    <a class="item" data-tab="currencies"><i class="fas fa-coins"></i> Валюта</a>
-    <a class="item" data-tab="numbers"><i class="fas fa-sliders-h"></i> Параметры</a>
-  </nav>
+    {{!-- ═══════════════ ВКЛАДКИ ═══════════════ --}}
+    <nav class="sc-tabs tabs" data-group="sc-main">
+        <a class="item" data-tab="abilities"><i class="fas fa-fist-raised"></i> Характеристики</a>
+        <a class="item" data-tab="skills"><i class="fas fa-running"></i> Навыки</a>
+        <a class="item" data-tab="weapons"><i class="fas fa-sword"></i> Оружие</a>
+        <a class="item" data-tab="alignments"><i class="fas fa-yin-yang"></i> Мировоззрения</a>
+        <a class="item" data-tab="damage"><i class="fas fa-fire"></i> Типы урона</a>
+        <a class="item" data-tab="languages"><i class="fas fa-language"></i> Языки</a>
+        <a class="item" data-tab="currencies"><i class="fas fa-coins"></i> Валюта</a>
+        <a class="item" data-tab="numbers"><i class="fas fa-sliders-h"></i> Параметры</a>
+    </nav>
 
-  <div class="sc-content">
+    <div class="sc-content">
 
-    {{!-- ═══════════ ВКЛАДКА: ХАРАКТЕРИСТИКИ ═══════════ --}}
-    <section class="tab" data-tab="abilities" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Характеристики персонажа</div>
-        <div class="sc-tab-hint">Изменяй названия стандартных характеристик или добавляй новые. Галочка «Скрыть» убирает характеристику из листа персонажа.</div>
-      </div>
-      <table id="sc-table-abilities" class="sc-table">
-        <thead>
-          <tr>
-            <th style="width:80px">Ключ</th>
-            <th>Название</th>
-            <th style="width:70px">Сокращение</th>
-            <th style="width:50px" title="Скрыть из листа"><i class="fas fa-eye-slash"></i></th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each abilities}}
-          <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
-            <td><code class="sc-key">{{key}}</code></td>
-            <td>
-              <input type="text" name="abilities.{{key}}.label" value="{{label}}" placeholder="{{label}}">
-              {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
-            </td>
-            <td><input type="text" name="abilities.{{key}}.abbr" value="{{abbr}}" style="width:56px"></td>
-            <td class="sc-td-center"><input type="checkbox" name="abilities.{{key}}.hidden" {{#if hidden}}checked{{/if}}></td>
-            <td class="sc-td-center">
-              {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
-            </td>
-          </tr>
-          {{/each}}
-        </tbody>
-      </table>
-      <button type="button" id="sc-add-ability" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить характеристику</button>
-    </section>
+        {{!-- ═══════════ ХАРАКТЕРИСТИКИ ═══════════ --}}
+        <section class="tab" data-tab="abilities" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Характеристики персонажа</div>
+                <div class="sc-tab-hint">Изменяй названия стандартных характеристик или добавляй новые. Галочка «Скрыть» убирает характеристику из листа персонажа.</div>
+            </div>
+            <table id="sc-table-abilities" class="sc-table">
+                <thead>
+                <tr>
+                    <th style="width:80px">Ключ</th>
+                    <th>Название</th>
+                    <th style="width:70px">Сокращение</th>
+                    <th style="width:50px" title="Скрыть из листа"><i class="fas fa-eye-slash"></i></th>
+                    <th style="width:36px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each abilities}}
+                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                        <td><code class="sc-key">{{key}}</code></td>
+                        <td>
+                            <input type="text" name="abilities.{{key}}.label" value="{{label}}" placeholder="{{label}}">
+                            {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
+                        </td>
+                        <td><input type="text" name="abilities.{{key}}.abbr" value="{{abbr}}" style="width:56px"></td>
+                        <td class="sc-td-center"><input type="checkbox" name="abilities.{{key}}.hidden" {{#if hidden}}checked{{/if}}></td>
+                        <td class="sc-td-center">
+                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                        </td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+            <button type="button" id="sc-add-ability" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить характеристику</button>
+        </section>
 
-    {{!-- ═══════════ ВКЛАДКА: НАВЫКИ ═══════════ --}}
-    <section class="tab" data-tab="skills" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Навыки</div>
-        <div class="sc-tab-hint">Изменяй названия навыков, меняй какая характеристика на них влияет, или добавляй новые. Колонка «Хар.» — сокращение характеристики (str, dex, con, int, wis, cha).</div>
-      </div>
-      <table id="sc-table-skills" class="sc-table">
-        <thead>
-          <tr>
-            <th style="width:70px">Ключ</th>
-            <th>Название навыка</th>
-            <th style="width:90px">Характеристика</th>
-            <th style="width:50px" title="Скрыть"><i class="fas fa-eye-slash"></i></th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each skills}}
-          <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
-            <td><code class="sc-key">{{key}}</code></td>
-            <td>
-              <input type="text" name="skills.{{key}}.label" value="{{label}}" placeholder="{{label}}">
-              {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
-            </td>
-            <td>
-              <select name="skills.{{key}}.ability" style="width:82px">
-                <option value="str" {{#if (eq ability "str")}}selected{{/if}}>Сила (str)</option>
-                <option value="dex" {{#if (eq ability "dex")}}selected{{/if}}>Ловк. (dex)</option>
-                <option value="con" {{#if (eq ability "con")}}selected{{/if}}>Тел. (con)</option>
-                <option value="int" {{#if (eq ability "int")}}selected{{/if}}>Инт. (int)</option>
-                <option value="wis" {{#if (eq ability "wis")}}selected{{/if}}>Муд. (wis)</option>
-                <option value="cha" {{#if (eq ability "cha")}}selected{{/if}}>Хар. (cha)</option>
-              </select>
-            </td>
-            <td class="sc-td-center"><input type="checkbox" name="skills.{{key}}.hidden" {{#if hidden}}checked{{/if}}></td>
-            <td class="sc-td-center">
-              {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
-            </td>
-          </tr>
-          {{/each}}
-        </tbody>
-      </table>
-      <button type="button" id="sc-add-skill" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить навык</button>
-    </section>
+        {{!-- ═══════════ НАВЫКИ ═══════════ --}}
+        <section class="tab" data-tab="skills" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Навыки</div>
+                <div class="sc-tab-hint">Изменяй названия навыков, меняй какая характеристика на них влияет, или добавляй новые. Список характеристик включает твои кастомные.</div>
+            </div>
+            <table id="sc-table-skills" class="sc-table">
+                <thead>
+                <tr>
+                    <th style="width:70px">Ключ</th>
+                    <th>Название навыка</th>
+                    <th style="width:110px">Характеристика</th>
+                    <th style="width:50px" title="Скрыть"><i class="fas fa-eye-slash"></i></th>
+                    <th style="width:36px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each skills}}
+                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                        <td><code class="sc-key">{{key}}</code></td>
+                        <td>
+                            <input type="text" name="skills.{{key}}.label" value="{{label}}" placeholder="{{label}}">
+                            {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
+                        </td>
+                        <td>
+                            {{!-- Динамический список: стандартные + кастомные характеристики --}}
+                            <select name="skills.{{key}}.ability" style="width:100px">
+                                {{#each abilityOptions}}
+                                    <option value="{{key}}" {{#if selected}}selected{{/if}}>{{key}}</option>
+                                {{/each}}
+                            </select>
+                        </td>
+                        <td class="sc-td-center"><input type="checkbox" name="skills.{{key}}.hidden" {{#if hidden}}checked{{/if}}></td>
+                        <td class="sc-td-center">
+                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                        </td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+            <button type="button" id="sc-add-skill" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить навык</button>
+        </section>
 
-    {{!-- ═══════════ ВКЛАДКА: ОРУЖИЕ ═══════════ --}}
-    <section class="tab" data-tab="weapons" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Типы оружия и брони</div>
-        <div class="sc-tab-hint">Переименовывай категории оружия — например «Простое рукопашное» в «Примитивное оружие». Добавляй свои категории для нестандартных систем.</div>
-      </div>
-      <table id="sc-table-weapons" class="sc-table">
-        <thead>
-          <tr>
-            <th style="width:100px">Ключ</th>
-            <th>Название</th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each weapons}}
-          <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
-            <td><code class="sc-key">{{key}}</code></td>
-            <td><input type="text" name="weaponTypes.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
-            <td class="sc-td-center">
-              {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
-            </td>
-          </tr>
-          {{/each}}
-        </tbody>
-      </table>
-      <button type="button" id="sc-add-weapon" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить тип оружия</button>
-    </section>
+        {{!-- ═══════════ ОРУЖИЕ ═══════════ --}}
+        <section class="tab" data-tab="weapons" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Типы оружия</div>
+                <div class="sc-tab-hint">Переименовывай категории оружия или добавляй свои для нестандартных систем.</div>
+            </div>
+            <table id="sc-table-weapons" class="sc-table">
+                <thead>
+                <tr>
+                    <th style="width:100px">Ключ</th>
+                    <th>Название</th>
+                    <th style="width:36px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each weapons}}
+                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                        <td><code class="sc-key">{{key}}</code></td>
+                        <td><input type="text" name="weaponTypes.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                        <td class="sc-td-center">
+                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                        </td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+            <button type="button" id="sc-add-weapon" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить тип оружия</button>
+        </section>
 
-    {{!-- ═══════════ ВКЛАДКА: МИРОВОЗЗРЕНИЯ ═══════════ --}}
-    <section class="tab" data-tab="alignments" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Мировоззрения</div>
-        <div class="sc-tab-hint">Изменяй названия мировоззрений или добавляй свои для нестандартных сеттингов.</div>
-      </div>
-      <table id="sc-table-alignments" class="sc-table">
-        <thead>
-          <tr>
-            <th style="width:60px">Ключ</th>
-            <th>Название</th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each alignments}}
-          <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
-            <td><code class="sc-key">{{key}}</code></td>
-            <td><input type="text" name="alignments.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
-            <td class="sc-td-center">
-              {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
-            </td>
-          </tr>
-          {{/each}}
-        </tbody>
-      </table>
-      <button type="button" id="sc-add-alignment" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить мировоззрение</button>
-    </section>
+        {{!-- ═══════════ МИРОВОЗЗРЕНИЯ ═══════════ --}}
+        <section class="tab" data-tab="alignments" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Мировоззрения</div>
+                <div class="sc-tab-hint">Изменяй названия мировоззрений или добавляй свои для нестандартных сеттингов.</div>
+            </div>
+            <table id="sc-table-alignments" class="sc-table">
+                <thead>
+                <tr>
+                    <th style="width:60px">Ключ</th>
+                    <th>Название</th>
+                    <th style="width:36px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each alignments}}
+                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                        <td><code class="sc-key">{{key}}</code></td>
+                        <td><input type="text" name="alignments.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                        <td class="sc-td-center">
+                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                        </td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+            <button type="button" id="sc-add-alignment" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить мировоззрение</button>
+        </section>
 
-    {{!-- ═══════════ ВКЛАДКА: ТИПЫ УРОНА ═══════════ --}}
-    <section class="tab" data-tab="damage" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Типы урона</div>
-        <div class="sc-tab-hint">Переименовывай типы урона (огонь, яд, некротика...) или добавляй нестандартные — например «энергетический» или «психический».</div>
-      </div>
-      <table id="sc-table-damage" class="sc-table">
-        <thead>
-          <tr>
-            <th style="width:100px">Ключ</th>
-            <th>Название</th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each damageTypes}}
-          <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
-            <td><code class="sc-key">{{key}}</code></td>
-            <td><input type="text" name="damageTypes.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
-            <td class="sc-td-center">
-              {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
-            </td>
-          </tr>
-          {{/each}}
-        </tbody>
-      </table>
-      <button type="button" id="sc-add-damage" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить тип урона</button>
-    </section>
+        {{!-- ═══════════ ТИПЫ УРОНА ═══════════ --}}
+        <section class="tab" data-tab="damage" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Типы урона</div>
+                <div class="sc-tab-hint">Переименовывай типы урона или добавляй нестандартные. Иконка обязательна — без неё шестерёнка сопротивлений сломается. Нажми 🖼 чтобы открыть браузер файлов.</div>
+            </div>
+            <table id="sc-table-damage" class="sc-table">
+                <thead>
+                <tr>
+                    <th style="width:100px">Ключ</th>
+                    <th style="width:160px">Название</th>
+                    <th style="width:70px">Иконка</th>
+                    <th style="width:36px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each damageTypes}}
+                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                        <td><code class="sc-key">{{key}}</code></td>
+                        <td><input type="text" name="damageTypes.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                        <td class="sc-icon-cell">
+                            <div class="sc-icon-row">
+                                <img src="{{icon}}" class="sc-icon-preview" title="{{icon}}">
+                                <input type="hidden" name="damageTypes.{{key}}.icon" value="{{icon}}" class="sc-icon-path">
+                                <button type="button" class="sc-pick-icon" title="Выбрать иконку">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="sc-td-center">
+                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                        </td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+            <button type="button" id="sc-add-damage" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить тип урона</button>
+        </section>
 
-    {{!-- ═══════════ ВКЛАДКА: ЯЗЫКИ ═══════════ --}}
-    <section class="tab" data-tab="languages" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Языки</div>
-        <div class="sc-tab-hint">Добавляй новые языки для своего сеттинга — например «Драконий», «Язык теней», «Старший». Стандартные языки системы здесь тоже перечислены.</div>
-      </div>
-      <table id="sc-table-languages" class="sc-table">
-        <thead>
-          <tr>
-            <th style="width:100px">Ключ</th>
-            <th>Название</th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each languages}}
-          <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
-            <td><code class="sc-key">{{key}}</code></td>
-            <td><input type="text" name="languages.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
-            <td class="sc-td-center">
-              {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
-            </td>
-          </tr>
-          {{/each}}
-        </tbody>
-      </table>
-      <button type="button" id="sc-add-language" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить язык</button>
-    </section>
+        {{!-- ═══════════ ЯЗЫКИ ═══════════ --}}
+        <section class="tab" data-tab="languages" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Языки</div>
+                <div class="sc-tab-hint">Добавляй новые языки для своего сеттинга — например «Драконий», «Язык теней», «Старший».</div>
+            </div>
+            <table id="sc-table-languages" class="sc-table">
+                <thead>
+                <tr>
+                    <th style="width:100px">Ключ</th>
+                    <th>Название</th>
+                    <th style="width:36px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each languages}}
+                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                        <td><code class="sc-key">{{key}}</code></td>
+                        <td><input type="text" name="languages.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                        <td class="sc-td-center">
+                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                        </td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+            <button type="button" id="sc-add-language" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить язык</button>
+        </section>
 
-    {{!-- ═══════════ ВКЛАДКА: ВАЛЮТА ═══════════ --}}
-    <section class="tab" data-tab="currencies" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Валюты</div>
-        <div class="sc-tab-hint">Переименовывай монеты — например «Золотая монета (зм)» вместо «Gold Piece (gp)». Ключи (gp, sp...) менять не нужно.</div>
-      </div>
-      <table id="sc-table-currencies" class="sc-table">
-        <thead>
-          <tr>
-            <th style="width:60px">Ключ</th>
-            <th>Полное название</th>
-            <th style="width:80px">Сокращение</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each currencies}}
-          <tr data-key="{{key}}">
-            <td><code class="sc-key">{{key}}</code></td>
-            <td><input type="text" name="currencies.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
-            <td><input type="text" name="currencies.{{key}}.abbr" value="{{abbr}}" placeholder="{{abbr}}" style="width:64px"></td>
-          </tr>
-          {{/each}}
-        </tbody>
-      </table>
-    </section>
+        {{!-- ═══════════ ВАЛЮТА ═══════════ --}}
+        <section class="tab" data-tab="currencies" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Валюты</div>
+                <div class="sc-tab-hint">Переименовывай монеты — например «Золотая монета (зм)» вместо «Gold Piece (gp)».</div>
+            </div>
+            <table id="sc-table-currencies" class="sc-table">
+                <thead>
+                <tr>
+                    <th style="width:60px">Ключ</th>
+                    <th>Полное название</th>
+                    <th style="width:80px">Сокращение</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each currencies}}
+                    <tr data-key="{{key}}">
+                        <td><code class="sc-key">{{key}}</code></td>
+                        <td><input type="text" name="currencies.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                        <td><input type="text" name="currencies.{{key}}.abbr" value="{{abbr}}" placeholder="{{abbr}}" style="width:64px"></td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+        </section>
 
-    {{!-- ═══════════ ВКЛАДКА: ПАРАМЕТРЫ ═══════════ --}}
-    <section class="tab" data-tab="numbers" data-group="sc-main">
-      <div class="sc-tab-header">
-        <div class="sc-tab-title">Числовые параметры системы</div>
-        <div class="sc-tab-hint">Базовые числа механики. Меняй только если точно понимаешь что делаешь — неверные значения могут сломать формулы системы.</div>
-      </div>
-      <div class="sc-numerics-grid">
-        {{#each numerics}}
-        <div class="sc-numeric-card">
-          <div class="sc-numeric-label">{{label}}</div>
-          <input
-            type="{{type}}"
-            class="sc-numeric-field"
-            data-key="{{key}}"
-            data-original="{{original}}"
-            value="{{value}}"
-            placeholder="{{original}}"
-            {{#if (eq type "number")}}step="1" min="0"{{/if}}
-          >
-          <div class="sc-numeric-hint">{{hint}}</div>
-        </div>
-        {{/each}}
-      </div>
-    </section>
+        {{!-- ═══════════ ПАРАМЕТРЫ ═══════════ --}}
+        <section class="tab" data-tab="numbers" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Числовые параметры системы</div>
+                <div class="sc-tab-hint">Базовые числа механики. Меняй только если точно понимаешь что делаешь.</div>
+            </div>
+            <div class="sc-numerics-grid">
+                {{#each numerics}}
+                    <div class="sc-numeric-card">
+                        <div class="sc-numeric-label">{{label}}</div>
+                        <input
+                                type="{{type}}"
+                                class="sc-numeric-field"
+                                data-key="{{key}}"
+                                data-original="{{original}}"
+                                value="{{value}}"
+                                placeholder="{{original}}"
+                            {{#if (eq type "number")}}step="1" min="0"{{/if}}
+                        >
+                        <div class="sc-numeric-hint">{{hint}}</div>
+                    </div>
+                {{/each}}
+            </div>
+        </section>
 
-  </div>{{!-- /sc-content --}}
+    </div>{{!-- /sc-content --}}
 
-  {{!-- ═══════════ ФУТЕР С КНОПКАМИ ═══════════ --}}
-  <footer class="sc-footer flexrow">
-    <button type="submit" class="sc-btn-save">
-      <i class="fas fa-floppy-disk"></i> Сохранить изменения
-    </button>
-    <button type="button" id="sc-reset" class="sc-btn-reset">
-      <i class="fas fa-rotate-left"></i> Сбросить всё
-    </button>
-  </footer>
+    {{!-- ═══════════ ФУТЕР ═══════════ --}}
+    <footer class="sc-footer flexrow">
+        <button type="submit" class="sc-btn-save">
+            <i class="fas fa-floppy-disk"></i> Сохранить изменения
+        </button>
+        <button type="button" id="sc-reset" class="sc-btn-reset">
+            <i class="fas fa-rotate-left"></i> Сбросить всё
+        </button>
+    </footer>
 
 </form>
