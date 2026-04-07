@@ -31,8 +31,6 @@ const SKILL_HINTS = {
     sur: "Мудрость — следы, ориентирование, охота, укрытие в дикой природе",
 };
 
-// Дефолтная иконка для кастомных типов урона
-// (берём реально существующую в dnd5e иконку)
 const DEFAULT_DAMAGE_ICON  = "systems/dnd5e/icons/svg/damage/bludgeoning.svg";
 const DEFAULT_DAMAGE_COLOR = "#888888";
 
@@ -51,14 +49,10 @@ function loc(str) {
 function getAllAbilityKeys() {
     const standard = Object.keys(ORIGINAL_SYSTEM_CONFIG.abilities ?? {});
     const custom   = Object.keys(loadCustomizations().abilities ?? {}).filter(k => !standard.includes(k));
-    return [...standard, ...custom];
+    return[...standard, ...custom];
 }
 
-/**
- * Проверяет что ключ состоит только из латинских букв, цифр и дефиса/подчёркивания.
- * Возвращает { valid: bool, reason: string }
- */
-function validateKey(key, existingKeys = []) {
+function validateKey(key, existingKeys =[]) {
     if (!key || !key.trim()) return { valid: false, reason: "Ключ не может быть пустым" };
     if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key))
         return { valid: false, reason: `"${key}" — только латиница, цифры, _ и -. Без пробелов и кириллицы` };
@@ -67,20 +61,12 @@ function validateKey(key, existingKeys = []) {
     return { valid: true };
 }
 
-/**
- * Собирает все ключи видимых в таблице строк (data-key атрибут).
- * Используется чтобы определить какие кастомные записи были удалены из DOM.
- */
 function getDomKeys(html, tableSelector) {
     const keys = new Set();
     html.querySelectorAll(`${tableSelector} tr[data-key]`).forEach(row => keys.add(row.dataset.key));
     return keys;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Строит правильный объект для damageTypes совместимый с dnd5e 5.x
-// DamagesConfig._processChoice делает icon.endsWith(".svg") — icon обязан быть строкой
-// ─────────────────────────────────────────────────────────────────────────────
 function buildDamageTypeEntry(label, icon, color) {
     return {
         label:      label || "Custom",
@@ -91,9 +77,6 @@ function buildDamageTypeEntry(label, icon, color) {
     };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Открывает FilePicker Foundry и возвращает выбранный путь
-// ─────────────────────────────────────────────────────────────────────────────
 function openFilePicker(currentPath, onSelect) {
     new FilePicker({
         type: "imagevideo",
@@ -120,13 +103,13 @@ class JsonEditorApp extends FormApplication {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             id: this.APP_ID,
-            template: `modules/${MODULE_ID}/templates/${this.APP_ID}.hbs`,
+            template: `modules/${MODULE_ID}/templates/json-editor-app.hbs`,
             popOut: true,
             resizable: true,
             minimizable: true,
             width: 860,
             height: 640,
-            tabs: [{ navSelector: ".sc-tabs", contentSelector: ".sc-content", initial: "abilities" }],
+            tabs:[{ navSelector: ".sc-tabs", contentSelector: ".sc-content", initial: "abilities" }],
             title: "Настройка системы D&D 5e",
         });
     }
@@ -145,47 +128,12 @@ class JsonEditorApp extends FormApplication {
         const languages   = this._buildSimpleList(cfg, custom, "languages", null, true);
         const currencies  = this._buildCurrencyList(cfg, custom);
 
-        const numerics = [
-            {
-                key: "maxAbilityScore",
-                label: "Максимум характеристики",
-                hint: "До какого значения может вырасти любая характеристика (обычно 20)",
-                value: custom.maxAbilityScore ?? cfg.maxAbilityScore ?? 20,
-                original: cfg.maxAbilityScore ?? 20,
-                type: "number",
-            },
-            {
-                key: "maxLevel",
-                label: "Максимальный уровень",
-                hint: "Предел уровня персонажа (обычно 20)",
-                value: custom.maxLevel ?? cfg.maxLevel ?? 20,
-                original: cfg.maxLevel ?? 20,
-                type: "number",
-            },
-            {
-                key: "initiativeAbility",
-                label: "Характеристика инициативы",
-                hint: "Какая характеристика используется для броска инициативы (обычно dex)",
-                value: custom.initiativeAbility ?? cfg.initiativeAbility ?? "dex",
-                original: cfg.initiativeAbility ?? "dex",
-                type: "text",
-            },
-            {
-                key: "initiativeFormula",
-                label: "Формула инициативы",
-                hint: "Формула броска инициативы (обычно 1d20 — оставь пустым для стандартной)",
-                value: custom.initiativeFormula ?? cfg.initiativeFormula ?? "",
-                original: cfg.initiativeFormula ?? "",
-                type: "text",
-            },
-            {
-                key: "hitPointsAbility",
-                label: "Характеристика хитов",
-                hint: "Модификатор какой характеристики прибавляется к хитам (обычно con)",
-                value: custom.hitPointsAbility ?? cfg.hitPointsAbility ?? "con",
-                original: cfg.hitPointsAbility ?? "con",
-                type: "text",
-            },
+        const numerics =[
+            { key: "maxAbilityScore", label: "Максимум характеристики", hint: "До какого значения может вырасти любая характеристика (обычно 20)", value: custom.maxAbilityScore ?? cfg.maxAbilityScore ?? 20, original: cfg.maxAbilityScore ?? 20, type: "number" },
+            { key: "maxLevel", label: "Максимальный уровень", hint: "Предел уровня персонажа (обычно 20)", value: custom.maxLevel ?? cfg.maxLevel ?? 20, original: cfg.maxLevel ?? 20, type: "number" },
+            { key: "initiativeAbility", label: "Характеристика инициативы", hint: "Какая характеристика используется для броска инициативы (обычно dex)", value: custom.initiativeAbility ?? cfg.initiativeAbility ?? "dex", original: cfg.initiativeAbility ?? "dex", type: "text" },
+            { key: "initiativeFormula", label: "Формула инициативы", hint: "Формула броска инициативы (обычно 1d20 — оставь пустым для стандартной)", value: custom.initiativeFormula ?? cfg.initiativeFormula ?? "", original: cfg.initiativeFormula ?? "", type: "text" },
+            { key: "hitPointsAbility", label: "Характеристика хитов", hint: "Модификатор какой характеристики прибавляется к хитам (обычно con)", value: custom.hitPointsAbility ?? cfg.hitPointsAbility ?? "con", original: cfg.hitPointsAbility ?? "con", type: "text" },
         ];
 
         return {
@@ -198,56 +146,39 @@ class JsonEditorApp extends FormApplication {
         };
     }
 
-    // ── Построение списков ────────────────────────────────────────────────────
-
     _buildAbilityList(cfg, custom) {
-        const result    = [];
-        const src       = cfg.abilities ?? {};
+        const result =[];
+        const src = cfg.abilities ?? {};
         const overrides = custom.abilities ?? {};
-
         for (const [key, val] of Object.entries(src)) {
             const ov = overrides[key] ?? {};
             result.push({
-                key,
-                label: ov.label ?? loc(val.label) ?? key,
-                abbr:  ov.abbreviation ?? loc(val.abbreviation) ?? key.toUpperCase().slice(0,3),
-                hint:  ABILITY_HINTS[key] ?? "",
-                isCustom: false,
-                hidden: ov.hidden ?? false,
+                key, label: ov.label ?? loc(val.label) ?? key, abbr: ov.abbreviation ?? loc(val.abbreviation) ?? key.toUpperCase().slice(0,3),
+                hint: ABILITY_HINTS[key] ?? "", isCustom: false, hidden: ov.hidden ?? false, allowedUsers: (ov.allowedUsers || []).join(",")
             });
         }
         for (const [key, val] of Object.entries(overrides)) {
             if (src[key]) continue;
             if (!val || typeof val !== "object") continue;
             result.push({
-                key,
-                label: val.label ?? key,
-                abbr:  val.abbreviation ?? key.toUpperCase().slice(0,3),
-                hint:  "",
-                isCustom: true,
-                hidden: val.hidden ?? false,
+                key, label: val.label ?? key, abbr: val.abbreviation ?? key.toUpperCase().slice(0,3),
+                hint: "", isCustom: true, hidden: val.hidden ?? false, allowedUsers: (val.allowedUsers ||[]).join(",")
             });
         }
         return result;
     }
 
     _buildSkillList(cfg, custom) {
-        const result    = [];
-        const src       = cfg.skills ?? {};
+        const result =[];
+        const src = cfg.skills ?? {};
         const overrides = custom.skills ?? {};
-
         const allKeys = getAllAbilityKeys();
         for (const [key, val] of Object.entries(src)) {
             const ov = overrides[key] ?? {};
             const currentAbility = ov.ability ?? val.ability ?? "str";
             result.push({
-                key,
-                label:   ov.label ?? loc(val.label) ?? key,
-                ability: currentAbility,
-                hint:    SKILL_HINTS[key] ?? "",
-                isCustom: false,
-                hidden: ov.hidden ?? false,
-                // Передаём список характеристик с флагом selected для шаблона
+                key, label: ov.label ?? loc(val.label) ?? key, ability: currentAbility,
+                hint: SKILL_HINTS[key] ?? "", isCustom: false, hidden: ov.hidden ?? false, allowedUsers: (ov.allowedUsers ||[]).join(","),
                 abilityOptions: allKeys.map(a => ({ key: a, selected: a === currentAbility })),
             });
         }
@@ -256,86 +187,62 @@ class JsonEditorApp extends FormApplication {
             if (!val || typeof val !== "object") continue;
             const currentAbility = val.ability ?? "str";
             result.push({
-                key,
-                label:   val.label ?? key,
-                ability: currentAbility,
-                hint:    "",
-                isCustom: true,
-                hidden: val.hidden ?? false,
+                key, label: val.label ?? key, ability: currentAbility,
+                hint: "", isCustom: true, hidden: val.hidden ?? false, allowedUsers: (val.allowedUsers ||[]).join(","),
                 abilityOptions: allKeys.map(a => ({ key: a, selected: a === currentAbility })),
             });
         }
         return result;
     }
 
-    // Специальный метод для типов урона — с полями icon и color
     _buildDamageList(cfg, custom) {
-        const result    = [];
-        const src       = cfg.damageTypes ?? {};
+        const result =[];
+        const src = cfg.damageTypes ?? {};
         const overrides = custom.damageTypes ?? {};
-
         for (const [key, val] of Object.entries(src)) {
             const ov = overrides[key] ?? {};
             result.push({
-                key,
-                label:    ov.label ?? loc(val.label) ?? key,
-                icon:     ov.icon  ?? val.icon  ?? DEFAULT_DAMAGE_ICON,
-                isCustom: false,
-                hidden:   ov.hidden ?? false,
+                key, label: ov.label ?? loc(val.label) ?? key, icon: ov.icon ?? val.icon ?? DEFAULT_DAMAGE_ICON,
+                isCustom: false, hidden: ov.hidden ?? false, allowedUsers: (ov.allowedUsers || []).join(",")
             });
         }
-        // Кастомные (которых нет в стандартных)
         for (const [key, val] of Object.entries(overrides)) {
             if (src[key]) continue;
             if (!val || typeof val !== "object") continue;
             result.push({
-                key,
-                label:    val.label ?? key,
-                icon:     val.icon  ?? DEFAULT_DAMAGE_ICON,
-                isCustom: true,
-                hidden:   false,
+                key, label: val.label ?? key, icon: val.icon ?? DEFAULT_DAMAGE_ICON,
+                isCustom: true, hidden: val.hidden ?? false, allowedUsers: (val.allowedUsers ||[]).join(",")
             });
         }
         return result;
     }
 
     _buildSimpleList(cfg, custom, cfgKey, altKey, hasLabel = false) {
-        const src       = cfg[cfgKey] ?? (altKey ? cfg[altKey] : null) ?? {};
-        const result    = [];
+        const src = cfg[cfgKey] ?? (altKey ? cfg[altKey] : null) ?? {};
+        const result = [];
         const overrides = custom[cfgKey] ?? {};
-
         for (const [key, val] of Object.entries(src)) {
-            const ov       = overrides[key] ?? {};
+            const ov = overrides[key] ?? {};
             const rawLabel = hasLabel ? (val?.label ?? val) : (typeof val === "string" ? val : val?.label ?? key);
-            result.push({
-                key,
-                label: ov.label ?? loc(rawLabel) ?? key,
-                isCustom: false,
-                hidden: ov.hidden ?? false,
-            });
+            result.push({ key, label: ov.label ?? loc(rawLabel) ?? key, isCustom: false, hidden: ov.hidden ?? false, allowedUsers: (ov.allowedUsers ||[]).join(",") });
         }
         for (const [key, val] of Object.entries(overrides)) {
             if (src[key]) continue;
             const rawLabel = hasLabel ? (val?.label ?? val) : (typeof val === "string" ? val : val?.label ?? key);
-            result.push({ key, label: rawLabel ?? key, isCustom: true, hidden: false });
+            result.push({ key, label: rawLabel ?? key, isCustom: true, hidden: val.hidden ?? false, allowedUsers: (val.allowedUsers ||[]).join(",") });
         }
         return result;
     }
 
     _buildCurrencyList(cfg, custom) {
-        const src       = cfg.currencies ?? {};
+        const src = cfg.currencies ?? {};
         const overrides = custom.currencies ?? {};
         return Object.entries(src).map(([key, val]) => {
             const ov = overrides[key] ?? {};
-            return {
-                key,
-                label: ov.label ?? loc(val.label) ?? key,
-                abbr:  ov.abbreviation ?? loc(val.abbreviation) ?? key,
-            };
+            return { key, label: ov.label ?? loc(val.label) ?? key, abbr: ov.abbreviation ?? loc(val.abbreviation) ?? key };
         });
     }
 
-    // ── Привязка событий ──────────────────────────────────────────────────────
     activateListeners(html) {
         super.activateListeners(html);
         html = html[0] ?? html;
@@ -347,14 +254,68 @@ class JsonEditorApp extends FormApplication {
         html.querySelector("#sc-add-damage")?.addEventListener("click",    () => this._addRow(html, "damage"));
         html.querySelector("#sc-add-language")?.addEventListener("click",  () => this._addRow(html, "language"));
 
-        // Удаление строк
         html.addEventListener("click", (e) => {
             const btn = e.target.closest(".sc-delete-row");
             if (!btn) return;
             btn.closest("tr")?.remove();
         });
 
-        // Live-валидация полей ключа — показываем инлайн-ошибку сразу при вводе
+        // ── ЛОГИКА ОКНА ДОСТУПОВ (Белый список) ──
+        html.addEventListener("click", async (e) => {
+            const btn = e.target.closest(".sc-access-btn");
+            if (!btn) return;
+            const row = btn.closest("tr");
+            const input = row.querySelector(".sc-allowed-users");
+            const keyNode = row.querySelector(".sc-key") || row.querySelector("input[name*='key']");
+            const itemName = keyNode ? (keyNode.textContent || keyNode.value) : "Элемент";
+
+            const currentIds = input.value ? input.value.split(",") :[];
+            const players = game.users.filter(u => !u.isGM);
+
+            let checkboxesHTML = players.map(p => `
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px; cursor:pointer; padding:6px; background:rgba(0,0,0,0.2); border-radius:4px; border:1px solid rgba(255,215,0,0.1);">
+                    <input type="checkbox" class="sc-user-cb" value="${p.id}" ${currentIds.includes(p.id) ? "checked" : ""} style="accent-color:#ffd700;">
+                    <span style="color:#f0e6d2;">${p.name}</span>
+                </label>
+            `).join("");
+
+            if (players.length === 0) checkboxesHTML = "<p style='color:#ef9a9a;'>В мире нет игроков (не ГМов).</p>";
+
+            new Dialog({
+                title: `Доступ: ${itemName}`,
+                content: `
+                    <div style="padding:10px; font-family:'Signika',sans-serif; background:#1a1a2e; color:#f0e6d2;">
+                        <p style="font-size:12px; color:#8a7a65; margin-bottom:12px;">
+                            Если у элемента стоит галочка <b>"Скрыть"</b>, он будет скрыт от всех.<br>
+                            Отметьте игроков ниже, для которых этот элемент <b>останется видимым</b>.
+                        </p>
+                        ${checkboxesHTML}
+                    </div>
+                `,
+                buttons: {
+                    save: {
+                        icon: '<i class="fas fa-check"></i>',
+                        label: "Применить",
+                        callback: (htmlDlg) => {
+                            const checked = Array.from(htmlDlg[0].querySelectorAll('.sc-user-cb:checked')).map(cb => cb.value);
+                            input.value = checked.join(",");
+
+                            if (checked.length > 0) {
+                                btn.style.background = "rgba(76, 175, 80, 0.2)";
+                                btn.style.borderColor = "#4caf50";
+                                btn.style.color = "#4caf50";
+                            } else {
+                                btn.style.background = "rgba(0,0,0,0.3)";
+                                btn.style.borderColor = "rgba(255,215,0,0.2)";
+                                btn.style.color = "#ffd700";
+                            }
+                        }
+                    }
+                },
+                default: "save"
+            }, { width: 350 }).render(true);
+        });
+
         html.addEventListener("input", (e) => {
             const input = e.target;
             if (!input.name?.includes("[].key")) return;
@@ -370,7 +331,6 @@ class JsonEditorApp extends FormApplication {
             }
         });
 
-        // Кнопки выбора иконки через FilePicker (делегирование — кнопки добавляются динамически)
         html.addEventListener("click", (e) => {
             const btn = e.target.closest(".sc-pick-icon");
             if (!btn) return;
@@ -380,84 +340,52 @@ class JsonEditorApp extends FormApplication {
             if (!input) return;
             openFilePicker(input.value, (path) => {
                 input.value = path;
-                if (preview) {
-                    preview.src   = path;
-                    preview.style.display = "inline";
-                }
+                if (preview) { preview.src = path; preview.style.display = "inline"; }
             });
         });
 
-        // Сброс
         html.querySelector("#sc-reset")?.addEventListener("click", this._onReset.bind(this));
-
-        // Подсказки
-        html.querySelectorAll(".sc-hint").forEach(icon => {
-            const hint = icon.dataset.hint;
-            if (!hint) return;
-            icon.addEventListener("mouseenter", () => {
-                let tip = html.querySelector(".sc-tooltip");
-                if (!tip) { tip = document.createElement("div"); tip.className = "sc-tooltip"; html.appendChild(tip); }
-                const r  = icon.getBoundingClientRect();
-                const wr = html.getBoundingClientRect();
-                tip.textContent = hint;
-                tip.style.cssText = `position:absolute;top:${r.bottom - wr.top + 4}px;left:${r.left - wr.left}px;max-width:320px;background:#1a1a2e;color:#f0e6d2;font-size:11px;padding:6px 10px;border-radius:5px;border:1px solid rgba(255,215,0,0.3);z-index:999;pointer-events:none;line-height:1.5;`;
-                tip.style.display = "block";
-            });
-            icon.addEventListener("mouseleave", () => html.querySelector(".sc-tooltip")?.remove());
-        });
     }
 
-    // ── Добавление новой строки ───────────────────────────────────────────────
     _addRow(html, type) {
-        const abilityOptions = getAllAbilityKeys()
-            .map(a => `<option value="${a}">${a}</option>`)
-            .join("");
+        const abilityOptions = getAllAbilityKeys().map(a => `<option value="${a}">${a}</option>`).join("");
+
+        const accessHtml = `
+            <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+                <input type="checkbox" title="Скрыть для всех" style="margin:0; width:16px; height:16px; cursor:pointer;">
+                <button type="button" class="sc-access-btn" title="Исключения (кому видно)" style="display:flex; justify-content:center; align-items:center; width:24px; height:24px; margin:0; padding:0; background:rgba(0,0,0,0.3); border:1px solid rgba(255,215,0,0.3); color:#ffd700; border-radius:4px; cursor:pointer; transition:all 0.2s;">
+                    <i class="fas fa-users" style="font-size:11px; margin-left:1px;"></i>
+                </button>
+                <input type="hidden" class="sc-allowed-users" value="">
+            </div>`;
 
         const templates = {
             ability: () => {
                 const tbody = html.querySelector("#sc-table-abilities tbody");
                 if (!tbody) return;
-                const tr = document.createElement("tr");
-                tr.dataset.custom = "true";
-                tr.innerHTML = `
-                    <td><input type="text" name="customAbilities[].key"   placeholder="ключ (англ.)" style="width:80px"></td>
-                    <td><input type="text" name="customAbilities[].label" placeholder="Название"     style="width:140px"></td>
-                    <td><input type="text" name="customAbilities[].abbr"  placeholder="Сокр."        style="width:60px"></td>
-                    <td class="sc-td-center">—</td>
-                    <td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
+                const tr = document.createElement("tr"); tr.dataset.custom = "true";
+                tr.innerHTML = `<td><input type="text" name="customAbilities[].key" placeholder="ключ (англ.)" style="width:80px"></td><td><input type="text" name="customAbilities[].label" placeholder="Название" style="width:140px"></td><td><input type="text" name="customAbilities[].abbr" placeholder="Сокр." style="width:60px"></td><td class="sc-td-center">${accessHtml.replace('type="checkbox"', 'type="checkbox" name="customAbilities[].hidden"').replace('type="hidden"', 'type="hidden" name="customAbilities[].allowedUsers"')}</td><td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
                 tbody.appendChild(tr);
             },
             skill: () => {
                 const tbody = html.querySelector("#sc-table-skills tbody");
                 if (!tbody) return;
-                const tr = document.createElement("tr");
-                tr.dataset.custom = "true";
-                tr.innerHTML = `
-                    <td><input type="text" name="customSkills[].key"     placeholder="ключ (англ.)"    style="width:70px"></td>
-                    <td><input type="text" name="customSkills[].label"   placeholder="Название навыка" style="width:150px"></td>
-                    <td><select name="customSkills[].ability" style="width:80px">${abilityOptions}</select></td>
-                    <td class="sc-td-center">—</td>
-                    <td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
+                const tr = document.createElement("tr"); tr.dataset.custom = "true";
+                tr.innerHTML = `<td><input type="text" name="customSkills[].key" placeholder="ключ (англ.)" style="width:70px"></td><td><input type="text" name="customSkills[].label" placeholder="Название навыка" style="width:150px"></td><td><select name="customSkills[].ability" style="width:80px">${abilityOptions}</select></td><td class="sc-td-center">${accessHtml.replace('type="checkbox"', 'type="checkbox" name="customSkills[].hidden"').replace('type="hidden"', 'type="hidden" name="customSkills[].allowedUsers"')}</td><td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
                 tbody.appendChild(tr);
             },
             weapon: () => {
                 const tbody = html.querySelector("#sc-table-weapons tbody");
                 if (!tbody) return;
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><input type="text" name="customWeapons[].key"   placeholder="ключ"    style="width:80px"></td>
-                    <td><input type="text" name="customWeapons[].label" placeholder="Название" style="width:200px"></td>
-                    <td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
+                tr.innerHTML = `<td><input type="text" name="customWeapons[].key" placeholder="ключ" style="width:80px"></td><td><input type="text" name="customWeapons[].label" placeholder="Название" style="width:200px"></td><td class="sc-td-center">${accessHtml.replace('type="checkbox"', 'type="checkbox" name="customWeapons[].hidden"').replace('type="hidden"', 'type="hidden" name="customWeapons[].allowedUsers"')}</td><td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
                 tbody.appendChild(tr);
             },
             alignment: () => {
                 const tbody = html.querySelector("#sc-table-alignments tbody");
                 if (!tbody) return;
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><input type="text" name="customAlignments[].key"   placeholder="ключ"    style="width:80px"></td>
-                    <td><input type="text" name="customAlignments[].label" placeholder="Название" style="width:200px"></td>
-                    <td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
+                tr.innerHTML = `<td><input type="text" name="customAlignments[].key" placeholder="ключ" style="width:80px"></td><td><input type="text" name="customAlignments[].label" placeholder="Название" style="width:200px"></td><td class="sc-td-center">${accessHtml.replace('type="checkbox"', 'type="checkbox" name="customAlignments[].hidden"').replace('type="hidden"', 'type="hidden" name="customAlignments[].allowedUsers"')}</td><td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
                 tbody.appendChild(tr);
             },
             damage: () => {
@@ -465,41 +393,37 @@ class JsonEditorApp extends FormApplication {
                 if (!tbody) return;
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td><input type="text" name="customDamage[].key"   placeholder="ключ" style="width:70px"></td>
-                    <td><input type="text" name="customDamage[].label" placeholder="Название" style="width:130px"></td>
-                    <td class="sc-icon-cell">
-                      <div class="sc-icon-row">
-                        <img class="sc-icon-preview" src="${DEFAULT_DAMAGE_ICON}" title="${DEFAULT_DAMAGE_ICON}">
-                        <input type="hidden" name="customDamage[].icon" class="sc-icon-path" value="${DEFAULT_DAMAGE_ICON}">
-                        <button type="button" class="sc-pick-icon" title="Выбрать иконку">
-                          <i class="fas fa-image"></i>
-                        </button>
-                      </div>
-                    </td>
-                    <td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
+        <td><input type="text" name="customDamage[].key" placeholder="ключ" style="width:70px"></td>
+        <td><input type="text" name="customDamage[].label" placeholder="Название" style="width:130px"></td>
+        <td class="sc-icon-cell sc-td-center"> <!-- Добавили класс центрирования -->
+          <div class="sc-icon-row">
+            <img class="sc-icon-preview" src="${DEFAULT_DAMAGE_ICON}" title="${DEFAULT_DAMAGE_ICON}">
+            <input type="hidden" name="customDamage[].icon" class="sc-icon-path" value="${DEFAULT_DAMAGE_ICON}">
+            <button type="button" class="sc-pick-icon" title="Выбрать иконку"><i class="fas fa-image"></i></button>
+          </div>
+        </td>
+        <td class="sc-td-center">${accessHtml.replace('type="checkbox"', 'type="checkbox" name="customDamage[].hidden"').replace('type="hidden"', 'type="hidden" name="customDamage[].allowedUsers"')}</td>
+        <td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
                 tbody.appendChild(tr);
             },
             language: () => {
                 const tbody = html.querySelector("#sc-table-languages tbody");
                 if (!tbody) return;
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><input type="text" name="customLanguages[].key"   placeholder="ключ"    style="width:80px"></td>
-                    <td><input type="text" name="customLanguages[].label" placeholder="Название" style="width:200px"></td>
-                    <td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
+                tr.innerHTML = `<td><input type="text" name="customLanguages[].key" placeholder="ключ" style="width:80px"></td><td><input type="text" name="customLanguages[].label" placeholder="Название" style="width:200px"></td><td class="sc-td-center">${accessHtml.replace('type="checkbox"', 'type="checkbox" name="customLanguages[].hidden"').replace('type="hidden"', 'type="hidden" name="customLanguages[].allowedUsers"')}</td><td class="sc-td-center"><button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button></td>`;
                 tbody.appendChild(tr);
             },
         };
         templates[type]?.();
     }
 
-    // ── Сохранение формы ──────────────────────────────────────────────────────
     async _updateObject(event, formData) {
         const html     = this.element[0];
         const cfg      = ORIGINAL_SYSTEM_CONFIG;
         const existing = loadCustomizations();
 
-        // Начинаем с уже сохранённых данных — новые дополняют, не стирают
+        const getArray = (str) => str ? str.split(",").filter(id => id) :[];
+
         const abilities = foundry.utils.deepClone(existing.abilities ?? {});
         html.querySelectorAll("#sc-table-abilities tr[data-key]").forEach(row => {
             const key     = row.dataset.key;
@@ -508,30 +432,19 @@ class JsonEditorApp extends FormApplication {
             const newLabel  = row.querySelector(`input[name="abilities.${key}.label"]`)?.value?.trim();
             const newAbbr   = row.querySelector(`input[name="abilities.${key}.abbr"]`)?.value?.trim();
             const hidden    = row.querySelector(`input[name="abilities.${key}.hidden"]`)?.checked ?? false;
+            const allowedUsers = getArray(row.querySelector(`input[name="abilities.${key}.allowedUsers"]`)?.value);
+
             if (isCustom) {
-                // Кастомная характеристика — сохраняем любые изменения
-                if (newLabel || newAbbr) {
-                    abilities[key] = {
-                        ...(abilities[key] ?? {}),
-                        label:        newLabel || abilities[key]?.label || key,
-                        abbreviation: newAbbr  || abilities[key]?.abbreviation || key.slice(0,3).toUpperCase(),
-                        hidden,
-                        _custom: true,
-                    };
-                }
+                if (newLabel || newAbbr) abilities[key] = { ...(abilities[key] ?? {}), label: newLabel || abilities[key]?.label || key, abbreviation: newAbbr || abilities[key]?.abbreviation || key.slice(0,3).toUpperCase(), hidden, allowedUsers, _custom: true };
                 return;
             }
-            const origLabel = loc(orig.label);
-            const origAbbr  = loc(orig.abbreviation);
-            const changed = (newLabel && newLabel !== origLabel) || (newAbbr && newAbbr !== origAbbr) || hidden;
-            if (changed) abilities[key] = { label: newLabel || origLabel, abbreviation: newAbbr || origAbbr, hidden };
+            const origLabel = loc(orig.label); const origAbbr = loc(orig.abbreviation);
+            const changed = (newLabel && newLabel !== origLabel) || (newAbbr && newAbbr !== origAbbr) || hidden || allowedUsers.length > 0;
+            if (changed) abilities[key] = { label: newLabel || origLabel, abbreviation: newAbbr || origAbbr, hidden, allowedUsers };
             else delete abilities[key];
         });
-        // Удаляем кастомные записи которые пользователь убрал из таблицы
         const domAbilityKeys = getDomKeys(html, "#sc-table-abilities");
-        for (const key of Object.keys(abilities)) {
-            if (abilities[key]?._custom && !domAbilityKeys.has(key)) delete abilities[key];
-        }
+        for (const key of Object.keys(abilities)) if (abilities[key]?._custom && !domAbilityKeys.has(key)) delete abilities[key];
 
         const skills = foundry.utils.deepClone(existing.skills ?? {});
         html.querySelectorAll("#sc-table-skills tr[data-key]").forEach(row => {
@@ -541,27 +454,19 @@ class JsonEditorApp extends FormApplication {
             const newLabel   = row.querySelector(`input[name="skills.${key}.label"]`)?.value?.trim();
             const newAbility = row.querySelector(`select[name="skills.${key}.ability"]`)?.value;
             const hidden     = row.querySelector(`input[name="skills.${key}.hidden"]`)?.checked ?? false;
+            const allowedUsers = getArray(row.querySelector(`input[name="skills.${key}.allowedUsers"]`)?.value);
+
             if (isCustom) {
-                // Кастомный навык — всегда сохраняем актуальные значения из формы
-                skills[key] = {
-                    ...(skills[key] ?? {}),
-                    label:   newLabel   || skills[key]?.label   || key,
-                    ability: newAbility || skills[key]?.ability || "str",
-                    hidden,
-                    _custom: true,
-                };
+                skills[key] = { ...(skills[key] ?? {}), label: newLabel || skills[key]?.label || key, ability: newAbility || skills[key]?.ability || "str", hidden, allowedUsers, _custom: true };
                 return;
             }
             const origLabel = loc(orig.label);
-            const changed = (newLabel && newLabel !== origLabel) || (newAbility && newAbility !== orig.ability) || hidden;
-            if (changed) skills[key] = { label: newLabel || origLabel, ability: newAbility || orig.ability, hidden };
+            const changed = (newLabel && newLabel !== origLabel) || (newAbility && newAbility !== orig.ability) || hidden || allowedUsers.length > 0;
+            if (changed) skills[key] = { label: newLabel || origLabel, ability: newAbility || orig.ability, hidden, allowedUsers };
             else delete skills[key];
         });
-        // Удаляем кастомные навыки убранные из таблицы
         const domSkillKeys = getDomKeys(html, "#sc-table-skills");
-        for (const key of Object.keys(skills)) {
-            if (skills[key]?._custom && !domSkillKeys.has(key)) delete skills[key];
-        }
+        for (const key of Object.keys(skills)) if (skills[key]?._custom && !domSkillKeys.has(key)) delete skills[key];
 
         const weaponTypes = foundry.utils.deepClone(existing.weaponTypes ?? {});
         this._mergeSimpleOverrides(html, cfg, "weaponTypes", "#sc-table-weapons", weaponTypes);
@@ -569,7 +474,6 @@ class JsonEditorApp extends FormApplication {
         const alignments = foundry.utils.deepClone(existing.alignments ?? {});
         this._mergeSimpleOverrides(html, cfg, "alignments", "#sc-table-alignments", alignments);
 
-        // Типы урона — обновляем label и icon для всех записей (стандартных и кастомных)
         const damageTypes = foundry.utils.deepClone(existing.damageTypes ?? {});
         html.querySelectorAll("#sc-table-damage tr[data-key]").forEach(row => {
             const key      = row.dataset.key;
@@ -578,37 +482,19 @@ class JsonEditorApp extends FormApplication {
             const newLabel = row.querySelector(`input[name="damageTypes.${key}.label"]`)?.value?.trim();
             const newIcon  = row.querySelector(`input[name="damageTypes.${key}.icon"]`)?.value?.trim();
             const hidden   = row.querySelector(`input[name="damageTypes.${key}.hidden"]`)?.checked ?? false;
+            const allowedUsers = getArray(row.querySelector(`input[name="damageTypes.${key}.allowedUsers"]`)?.value);
+
             if (isCustom) {
-                // Кастомный тип урона — сохраняем актуальные значения, icon обязателен
-                damageTypes[key] = {
-                    ...(damageTypes[key] ?? {}),
-                    label:      newLabel || damageTypes[key]?.label || key,
-                    icon:       newIcon  || damageTypes[key]?.icon  || DEFAULT_DAMAGE_ICON,
-                    color:      damageTypes[key]?.color || DEFAULT_DAMAGE_COLOR,
-                    isPhysical: false,
-                    hidden,
-                    _custom:    true,
-                };
+                damageTypes[key] = { ...(damageTypes[key] ?? {}), label: newLabel || damageTypes[key]?.label || key, icon: newIcon || damageTypes[key]?.icon || DEFAULT_DAMAGE_ICON, color: damageTypes[key]?.color || DEFAULT_DAMAGE_COLOR, isPhysical: false, hidden, allowedUsers, _custom: true };
                 return;
             }
             const origLabel = loc(srcVal?.label ?? srcVal);
-            const changed = (newLabel && newLabel !== origLabel) || newIcon || hidden;
-            if (changed) {
-                damageTypes[key] = {
-                    ...(damageTypes[key] ?? {}),
-                    label:  newLabel || origLabel,
-                    icon:   newIcon  || srcVal.icon || DEFAULT_DAMAGE_ICON,
-                    hidden,
-                };
-            } else {
-                delete damageTypes[key];
-            }
+            const changed = (newLabel && newLabel !== origLabel) || newIcon || hidden || allowedUsers.length > 0;
+            if (changed) damageTypes[key] = { ...(damageTypes[key] ?? {}), label: newLabel || origLabel, icon: newIcon || srcVal.icon || DEFAULT_DAMAGE_ICON, hidden, allowedUsers };
+            else delete damageTypes[key];
         });
-        // Удаляем кастомные типы урона убранные из таблицы
         const domDamageKeys = getDomKeys(html, "#sc-table-damage");
-        for (const key of Object.keys(damageTypes)) {
-            if (damageTypes[key]?._custom && !domDamageKeys.has(key)) delete damageTypes[key];
-        }
+        for (const key of Object.keys(damageTypes)) if (damageTypes[key]?._custom && !domDamageKeys.has(key)) delete damageTypes[key];
 
         const languages = foundry.utils.deepClone(existing.languages ?? {});
         this._mergeSimpleOverrides(html, cfg, "languages", "#sc-table-languages", languages, true);
@@ -624,93 +510,45 @@ class JsonEditorApp extends FormApplication {
             if (val !== origVal && val !== "" && val !== null) numerics[key] = val;
         });
 
-        // ── Новые кастомные записи с валидацией ──────────────────────────────────
-        const errors = [];
-
-        // Все уже существующие ключи для проверки дублей
-        // Вспомогательная функция: ищет поле ключа в строке по имени и показывает ошибку
-        const validateAndShow = (rows, namePrefix, existing, onValid) => {
+        const errors =[];
+        const validateAndShow = (rows, namePrefix, existingKeys, onValid) => {
             for (const row of rows) {
-                const input = this.element[0]?.querySelector(
-                    `input[name="${namePrefix}[].key"][value="${row.key}"],` +
-                    `input[name="${namePrefix}[].key"]`
-                );
-                // Ищем точнее — по значению
                 const allInputs = this.element[0]?.querySelectorAll(`input[name="${namePrefix}[].key"]`) ?? [];
                 const keyInput = [...allInputs].find(el => el.value.trim() === row.key) ?? allInputs[0];
-
                 if (!row.key) {
                     if (keyInput) this._showKeyError(keyInput, "Ключ не может быть пустым");
-                    errors.push("пустой ключ");
-                    continue;
+                    errors.push("пустой ключ"); continue;
                 }
-                const check = validateKey(row.key, existing);
+                const check = validateKey(row.key, existingKeys);
                 if (!check.valid) {
                     if (keyInput) this._showKeyError(keyInput, check.reason);
-                    errors.push(check.reason);
-                    continue;
+                    errors.push(check.reason); continue;
                 }
-                // Валидно — снимаем ошибку
                 if (keyInput) this._showKeyError(keyInput, null);
                 onValid(row);
-                existing.push(row.key);
+                existingKeys.push(row.key);
             }
         };
 
         const allAbilityExisting = [...Object.keys(cfg.abilities ?? {}), ...Object.keys(abilities)];
-        validateAndShow(
-            this._collectCustomRows(html, "customAbilities[]", ["key","label","abbr"]),
-            "customAbilities", allAbilityExisting,
-            (a) => { abilities[a.key] = { label: a.label || a.key, abbreviation: a.abbr || a.key.slice(0,3).toUpperCase(), type: "Number", improvement: true, _custom: true }; }
-        );
+        validateAndShow(this._collectCustomRows(html, "customAbilities[]", ["key","label","abbr","hidden","allowedUsers"]), "customAbilities", allAbilityExisting, (a) => { abilities[a.key] = { label: a.label || a.key, abbreviation: a.abbr || a.key.slice(0,3).toUpperCase(), type: "Number", improvement: true, hidden: a.hidden, allowedUsers: getArray(a.allowedUsers), _custom: true }; });
 
         const allSkillExisting = [...Object.keys(cfg.skills ?? {}), ...Object.keys(skills)];
-        validateAndShow(
-            this._collectCustomRows(html, "customSkills[]", ["key","label","ability"]),
-            "customSkills", allSkillExisting,
-            (s) => { skills[s.key] = { label: s.label || s.key, ability: s.ability || "str", _custom: true }; }
-        );
+        validateAndShow(this._collectCustomRows(html, "customSkills[]",["key","label","ability","hidden","allowedUsers"]), "customSkills", allSkillExisting, (s) => { skills[s.key] = { label: s.label || s.key, ability: s.ability || "str", hidden: s.hidden, allowedUsers: getArray(s.allowedUsers), _custom: true }; });
 
-        const allWeaponExisting = [...Object.keys(cfg.weaponTypes ?? {}), ...Object.keys(weaponTypes)];
-        validateAndShow(
-            this._collectCustomRows(html, "customWeapons[]", ["key","label"]),
-            "customWeapons", allWeaponExisting,
-            (w) => { weaponTypes[w.key] = w.label || w.key; }
-        );
+        const allWeaponExisting =[...Object.keys(cfg.weaponTypes ?? {}), ...Object.keys(weaponTypes)];
+        validateAndShow(this._collectCustomRows(html, "customWeapons[]",["key","label","hidden","allowedUsers"]), "customWeapons", allWeaponExisting, (w) => { weaponTypes[w.key] = { label: w.label || w.key, hidden: w.hidden, allowedUsers: getArray(w.allowedUsers), _custom: true }; });
 
-        const allAlignmentExisting = [...Object.keys(cfg.alignments ?? {}), ...Object.keys(alignments)];
-        validateAndShow(
-            this._collectCustomRows(html, "customAlignments[]", ["key","label"]),
-            "customAlignments", allAlignmentExisting,
-            (a) => { alignments[a.key] = a.label || a.key; }
-        );
+        const allAlignmentExisting =[...Object.keys(cfg.alignments ?? {}), ...Object.keys(alignments)];
+        validateAndShow(this._collectCustomRows(html, "customAlignments[]", ["key","label","hidden","allowedUsers"]), "customAlignments", allAlignmentExisting, (a) => { alignments[a.key] = { label: a.label || a.key, hidden: a.hidden, allowedUsers: getArray(a.allowedUsers), _custom: true }; });
 
-        const allDamageExisting = [...Object.keys(cfg.damageTypes ?? {}), ...Object.keys(damageTypes)];
-        validateAndShow(
-            this._collectCustomRows(html, "customDamage[]", ["key","label","icon"]),
-            "customDamage", allDamageExisting,
-            (d) => {
-                damageTypes[d.key] = {
-                    label: d.label || d.key,
-                    icon:  (d.icon && d.icon.trim()) ? d.icon.trim() : DEFAULT_DAMAGE_ICON,
-                    color: DEFAULT_DAMAGE_COLOR, isPhysical: false, _custom: true,
-                };
-            }
-        );
+        const allDamageExisting =[...Object.keys(cfg.damageTypes ?? {}), ...Object.keys(damageTypes)];
+        validateAndShow(this._collectCustomRows(html, "customDamage[]", ["key","label","icon","hidden","allowedUsers"]), "customDamage", allDamageExisting, (d) => { damageTypes[d.key] = { label: d.label || d.key, icon: (d.icon && d.icon.trim()) ? d.icon.trim() : DEFAULT_DAMAGE_ICON, color: DEFAULT_DAMAGE_COLOR, isPhysical: false, hidden: d.hidden, allowedUsers: getArray(d.allowedUsers), _custom: true }; });
 
-        const allLangExisting = [...Object.keys(cfg.languages ?? {}), ...Object.keys(languages)];
-        validateAndShow(
-            this._collectCustomRows(html, "customLanguages[]", ["key","label"]),
-            "customLanguages", allLangExisting,
-            (l) => { languages[l.key] = { label: l.label || l.key, _custom: true }; }
-        );
+        const allLangExisting =[...Object.keys(cfg.languages ?? {}), ...Object.keys(languages)];
+        validateAndShow(this._collectCustomRows(html, "customLanguages[]", ["key","label","hidden","allowedUsers"]), "customLanguages", allLangExisting, (l) => { languages[l.key] = { label: l.label || l.key, hidden: l.hidden, allowedUsers: getArray(l.allowedUsers), _custom: true }; });
 
-        // Инлайн-ошибки уже показаны через _showKeyError в момент сбора.
-        // Если остались ошибки — не сохраняем, пользователь исправляет на месте.
-        if (errors.length > 0) {
-            ui.notifications.warn(`Исправьте ${errors.length} ошибок в ключах перед сохранением.`);
-            return;
-        }
+        if (errors.length > 0) { ui.notifications.warn(`Исправьте ${errors.length} ошибок в ключах перед сохранением.`); return; }
 
         const result = { ...existing, ...numerics };
         if (Object.keys(abilities).length)   result.abilities   = abilities;   else delete result.abilities;
@@ -728,6 +566,7 @@ class JsonEditorApp extends FormApplication {
 
     _mergeSimpleOverrides(html, cfg, cfgKey, tableSelector, target, hasLabelProp = false) {
         const src = cfg[cfgKey] ?? {};
+        const getArray = (str) => str ? str.split(",").filter(id => id) :[];
         html.querySelectorAll(`${tableSelector} tr[data-key]`).forEach(row => {
             const key       = row.dataset.key;
             const orig      = src[key];
@@ -735,8 +574,10 @@ class JsonEditorApp extends FormApplication {
             const newLabel  = row.querySelector(`input[name="${cfgKey}.${key}.label"]`)?.value?.trim();
             const origLabel = loc(hasLabelProp ? (orig?.label ?? orig) : (typeof orig === "string" ? orig : orig?.label ?? key));
             const hidden    = row.querySelector(`input[name="${cfgKey}.${key}.hidden"]`)?.checked ?? false;
-            if ((newLabel && newLabel !== origLabel) || hidden) {
-                target[key] = { ...(target[key] ?? {}), label: newLabel || origLabel, hidden };
+            const allowedUsers = getArray(row.querySelector(`input[name="${cfgKey}.${key}.allowedUsers"]`)?.value);
+
+            if ((newLabel && newLabel !== origLabel) || hidden || allowedUsers.length > 0) {
+                target[key] = { ...(target[key] ?? {}), label: newLabel || origLabel, hidden, allowedUsers };
             } else if (!target[key]?._custom) {
                 delete target[key];
             }
@@ -759,39 +600,29 @@ class JsonEditorApp extends FormApplication {
         });
     }
 
-    // Показывает/скрывает инлайн-ошибку под полем ключа
     _showKeyError(input, message) {
-        // Удаляем старую ошибку если есть
         const existing = input.parentElement?.querySelector(".sc-key-error");
         if (existing) existing.remove();
-        if (!message) {
-            input.style.borderColor = "";
-            input.style.boxShadow   = "";
-            return;
-        }
-        input.style.borderColor = "rgba(229,57,53,0.8)";
-        input.style.boxShadow   = "0 0 4px rgba(229,57,53,0.4)";
-        const err = document.createElement("div");
-        err.className   = "sc-key-error";
-        err.textContent = message;
+        if (!message) { input.style.borderColor = ""; input.style.boxShadow = ""; return; }
+        input.style.borderColor = "rgba(229,57,53,0.8)"; input.style.boxShadow = "0 0 4px rgba(229,57,53,0.4)";
+        const err = document.createElement("div"); err.className = "sc-key-error"; err.textContent = message;
         err.style.cssText = "font-size:10px;color:#ef9a9a;margin-bottom:2px;line-height:1.3;position:absolute;bottom:100%;left:0;z-index:10;background:#1a0a0a;padding:2px 5px;border-radius:3px;border:1px solid rgba(229,57,53,0.3);white-space:nowrap;";
-        // Позиционируем НАД инпутом
-        input.parentElement.style.position = "relative";
-        input.parentElement.insertBefore(err, input);
+        input.parentElement.style.position = "relative"; input.parentElement.insertBefore(err, input);
     }
 
     _collectCustomRows(html, namePrefix, fields) {
-        const result = [];
-        const rows   = new Set();
-        html.querySelectorAll(`input[name^="${namePrefix}"], select[name^="${namePrefix}"]`)
-            .forEach(el => rows.add(el.closest("tr")));
+        const result = []; const rows = new Set();
+        html.querySelectorAll(`input[name^="${namePrefix}"], select[name^="${namePrefix}"]`).forEach(el => rows.add(el.closest("tr")));
         for (const row of rows) {
             if (!row) continue;
-            const obj = {};
-            let hasKey = false;
+            const obj = {}; let hasKey = false;
             for (const field of fields) {
                 const el = row.querySelector(`[name="${namePrefix}.${field}"], [name="${namePrefix}[].${field}"]`);
-                if (el) { obj[field] = el.value?.trim(); if (field === "key" && obj[field]) hasKey = true; }
+                if (el) {
+                    if (el.type === "checkbox") obj[field] = el.checked;
+                    else obj[field] = el.value?.trim();
+                    if (field === "key" && obj[field]) hasKey = true;
+                }
             }
             if (hasKey) result.push(obj);
         }
@@ -819,14 +650,10 @@ class JsonEditorApp extends FormApplication {
     async importFromJson() {
         new Dialog({
             title: "Импорт настроек системы",
-            content: await renderTemplate("templates/apps/import-data.hbs", {
-                hint1: "Выберите JSON-файл с настройками системы.",
-                hint2: "Файл должен быть экспортирован из этого же модуля.",
-            }),
+            content: await renderTemplate("templates/apps/import-data.hbs", { hint1: "Выберите JSON-файл с настройками системы.", hint2: "Файл должен быть экспортирован из этого же модуля." }),
             buttons: {
                 import: {
-                    icon: '<i class="fas fa-file-import"></i>',
-                    label: "Импортировать",
+                    icon: '<i class="fas fa-file-import"></i>', label: "Импортировать",
                     callback: (html) => {
                         const form = html.find("form")[0];
                         if (!form.data.files.length) return ui.notifications.error("Файл не выбран!");
@@ -838,52 +665,40 @@ class JsonEditorApp extends FormApplication {
                     },
                 },
                 no: { icon: '<i class="fas fa-times"></i>', label: "Отмена" },
-            },
-            default: "import",
+            }, default: "import",
         }, { width: 400 }).render(true);
     }
 
     _getHeaderButtons() {
-        return [
+        let buttons = super._getHeaderButtons();
+
+        buttons = buttons.filter(b =>
+            !b.icon.includes("fa-patreon") &&
+            !b.icon.includes("fa-discord") &&
+            !b.icon.includes("fa-book") &&
+            !b.class?.includes("wiki")
+        );
+
+        return[
             { label: "Экспорт", class: "export", icon: "fas fa-file-export", onclick: this.ExportToJson.bind(this) },
             { label: "Импорт",  class: "import", icon: "fas fa-file-import",  onclick: this.importFromJson.bind(this) },
-            ...super._getHeaderButtons(),
+            ...buttons
         ];
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 function registerSettings() {
     const SYSTEM_ID        = game.system.id.toUpperCase();
     const defaultConfigKey = CONFIG[SYSTEM_ID] ? `CONFIG.${SYSTEM_ID}` : `CONFIG.${game.system.id}`;
 
     registerSettingsArray({
         customizationJson: { scope: "world", config: false, type: Object, default: {} },
-        configKey: {
-            name: `${MODULE_ID}.settings.configKey.name`,
-            hint: `${MODULE_ID}.settings.configKey.hint`,
-            scope: "world", config: true, type: String, default: defaultConfigKey,
-        },
+        configKey: { name: `${MODULE_ID}.settings.configKey.name`, hint: `${MODULE_ID}.settings.configKey.hint`, scope: "world", config: true, type: String, default: defaultConfigKey },
     });
 
     game.settings.registerMenu(MODULE_ID, "CustomizerApp", {
-        name:       game.i18n.localize(`${MODULE_ID}.settings.jsonEditor.name`),
-        label:      game.i18n.localize(`${MODULE_ID}.settings.jsonEditor.label`),
-        hint:       game.i18n.localize(`${MODULE_ID}.settings.jsonEditor.hint`),
-        icon:       "fas fa-cogs",
-        scope:      "world",
-        restricted: true,
-        type:       JsonEditorApp,
-    });
-
-    Hooks.on("renderSettingsConfig", (app, html) => {
-        html = html[0] ?? html;
-        const btn = html.querySelector('button[data-key="dnd5e-system-customizer.CustomizerApp"]');
-        if (!btn) return;
-        const pWarn = document.createElement("p");
-        pWarn.classList.add("notification", "warning");
-        pWarn.innerHTML = game.i18n.localize(`${MODULE_ID}.settings.jsonEditor.warn`);
-        btn.closest(".form-group")?.querySelector(".notes")?.after(pWarn);
+        name: "Настройки D&D 5e", label: "Открыть редактор", hint: "Кастомизация характеристик, навыков, языков и урона.",
+        icon: "fas fa-cogs", scope: "world", restricted: true, type: JsonEditorApp,
     });
 }
 
@@ -891,7 +706,6 @@ function getSetting(key)             { return game.settings.get(MODULE_ID, key);
 async function setSetting(key, val)  { return await game.settings.set(MODULE_ID, key, val); }
 function registerSettingsArray(s)    { for (const [k, v] of Object.entries(s)) game.settings.register(MODULE_ID, k, v); }
 
-// ─────────────────────────────────────────────────────────────────────────────
 const MODULE_ID = "dnd5e-system-customizer";
 let ORIGINAL_CONFIG        = {};
 let ORIGINAL_SYSTEM_CONFIG = {};
@@ -903,70 +717,79 @@ function onPostInit() {
     const configKey    = getSetting("configKey");
     const systemConfig = foundry.utils.getProperty(window, configKey);
 
-    if (!systemConfig) {
-        Hooks.once("ready", () => {
-            ui.notifications.warn("dnd5e-system-customizer.noConfig", { permanent: true, localize: true });
-        });
-        return;
-    }
+    if (!systemConfig) return;
 
     ORIGINAL_SYSTEM_CONFIG = foundry.utils.deepClone(systemConfig);
     delete ORIGINAL_SYSTEM_CONFIG.trackableAttributes;
 
-    const ORIGINAL_TRACKABLE_ATTRIBUTES = [...(systemConfig.trackableAttributes ?? [])];
+    const ORIGINAL_TRACKABLE_ATTRIBUTES =[...(systemConfig.trackableAttributes ?? [])];
     const customizations = foundry.utils.deepClone(getSetting("customizationJson") ?? {});
 
-    // ─── КЛЮЧЕВОЙ ФИX: кастомные типы урона применяем ВРУЧНУЮ, не через mergeObject ───
-    // mergeObject не гарантирует правильный тип для .color и может потерять .icon.
-    // DamagesConfig._processChoice делает icon.endsWith(".svg") — icon ОБЯЗАН быть строкой.
     const customDamageTypes = {};
     if (customizations.damageTypes) {
         for (const [key, val] of Object.entries(customizations.damageTypes)) {
-            if (val?._custom) {
-                // Извлекаем кастомные, чтобы применить их отдельно
-                customDamageTypes[key] = val;
-                delete customizations.damageTypes[key];
-            }
+            if (val?._custom) { customDamageTypes[key] = val; delete customizations.damageTypes[key]; }
         }
-        // Если после удаления кастомных damageTypes пустой — убираем чтобы не мешал merge
-        if (Object.keys(customizations.damageTypes).length === 0)
-            delete customizations.damageTypes;
+        if (Object.keys(customizations.damageTypes).length === 0) delete customizations.damageTypes;
     }
 
-    // Применяем стандартные оверрайды (переименования)
     const merged = foundry.utils.mergeObject(systemConfig, customizations);
     if (merged.trackableAttributes) merged.trackableAttributes = ORIGINAL_TRACKABLE_ATTRIBUTES;
 
-    // Применяем кастомные типы урона напрямую с гарантированной структурой
     for (const [key, val] of Object.entries(customDamageTypes)) {
         merged.damageTypes[key] = {
-            label:      val.label      || key,
-            icon:       (val.icon && typeof val.icon === "string" && val.icon.trim())
-                ? val.icon.trim()
-                : DEFAULT_DAMAGE_ICON,
-            color:      Color.fromString(
-                (typeof val.color === "string") ? val.color : DEFAULT_DAMAGE_COLOR
-            ),
-            isPhysical: false,
-            _custom:    true,
+            label: val.label || key,
+            icon: (val.icon && typeof val.icon === "string" && val.icon.trim()) ? val.icon.trim() : DEFAULT_DAMAGE_ICON,
+            color: Color.fromString((typeof val.color === "string") ? val.color : DEFAULT_DAMAGE_COLOR),
+            isPhysical: false, _custom: true,
         };
-        console.log(`[${MODULE_ID}] Applied custom damageType "${key}":`, merged.damageTypes[key].icon);
     }
-
-    deleteKeys(merged);
 }
 
-function deleteKeys(obj) {
-    if (!obj) return;
-    const isObj = typeof obj === "object" && !Array.isArray(obj) && obj !== null;
-    if (isObj) {
-        for (const key of Object.keys(obj)) {
-            if (obj[key]?.unsafelyDelete) delete obj[key];
-            else deleteKeys(obj[key]);
+Hooks.once("ready", () => {
+    if (game.user.isGM) return;
+
+    const configKey    = getSetting("configKey");
+    const systemConfig = foundry.utils.getProperty(window, configKey);
+    if (!systemConfig) return;
+
+    let css = "";
+    const userId = game.user.id;
+
+    if (systemConfig.abilities) {
+        for (const [key, val] of Object.entries(systemConfig.abilities)) {
+            if (val.hidden && !(val.allowedUsers ||[]).includes(userId)) {
+                css += `[data-ability="${key}"], .ability-score[data-ability="${key}"], .ability-check[data-ability="${key}"], li.ability[data-id="${key}"] { display: none !important; }\n`;
+            }
         }
-    } else if (Array.isArray(obj)) {
-        for (const val of obj) deleteKeys(val);
     }
-}
+
+    if (systemConfig.skills) {
+        for (const [key, val] of Object.entries(systemConfig.skills)) {
+            if (val.hidden && !(val.allowedUsers || []).includes(userId)) {
+                css += `[data-key="${key}"], [data-skill="${key}"], li.skill[data-key="${key}"] { display: none !important; }\n`;
+            }
+        }
+    }
+
+    const hideCategories = ["weaponTypes", "armorTypes", "alignments", "damageTypes", "conditionTypes", "languages"];
+    for (const cat of hideCategories) {
+        if (systemConfig[cat]) {
+            for (const [key, val] of Object.entries(systemConfig[cat])) {
+                if (val.hidden && !(val.allowedUsers || []).includes(userId)) {
+                    css += `option[value="${key}"],[data-key="${key}"] { display: none !important; }\n`;
+                }
+            }
+        }
+    }
+
+    if (css) {
+        const style = document.createElement("style");
+        style.id = "dnd5e-customizer-player-hides";
+        style.innerHTML = css;
+        document.head.appendChild(style);
+        console.log(`[${MODULE_ID}] Скрытые элементы вырезаны через CSS (с учётом исключений).`);
+    }
+});
 
 export { MODULE_ID, ORIGINAL_CONFIG, ORIGINAL_SYSTEM_CONFIG };
