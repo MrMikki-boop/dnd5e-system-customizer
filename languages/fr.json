@@ -1,0 +1,133 @@
+{
+    "dnd5e-system-customizer": {
+        "CustomizerApp": {
+            "delete": "Supprimer",
+            "hide": "Cacher",
+            "save": "Sauvegarder les modifications",
+            "tabs": {
+                "abilities": {
+                    "abilityAbbreviation": "Abréviation",
+                    "abilityName": "Nom de la capacité",
+                    "add": "Ajouter une capacité",
+                    "hint": "Personnalisez les capacités",
+                    "name": "Capacités"
+                },
+                "creatureTypes": {
+                    "add": "Ajouter un type de créature",
+                    "creatureAbbreviation": "Abréviation",
+                    "creatureName": "Nom du type de créature",
+                    "hint": "Personnalisez les types de créatures",
+                    "name": "Types de créature"
+                },
+                "damageTypes": {
+                    "add": "Ajouter un type de dommage",
+                    "damageAbbreviation": "Abréviation",
+                    "damageName": "Nom du type de dommage",
+                    "hint": "Personnalisez les types de dégâts",
+                    "name": "Types de dégâts"
+                },
+                "hitDieTypes": {
+                    "add": "Ajouter un type de matrice",
+                    "hint": "Personnalisez les types de matrices Hit",
+                    "hitDieName": "Frapper le type de matrice",
+                    "name": "Dés de frappe"
+                },
+                "itemRarity": {
+                    "add": "Ajouter la rareté de l'objet",
+                    "hint": "Personnalisez la rareté de l'objet",
+                    "itemRarityAbbreviation": "Abréviation",
+                    "itemRarityName": "Nom de la rareté de l'objet",
+                    "name": "Rareté de l'objet"
+                },
+                "languages": {
+                    "add": "Ajouter une langue",
+                    "hint": "Personnalisez les langues",
+                    "languageAbbreviation": "Abréviation",
+                    "languageName": "Nom de la langue",
+                    "name": "Langues"
+                },
+                "misc": {
+                    "hint": "Personnalisez le Divers",
+                    "hitPointsAbility": "Capacité de points de vie",
+                    "initiativeAbility": "Capacité d'initiative",
+                    "maxLevel": "Niveau maximum",
+                    "name": "Divers",
+                    "initiativeFormula": "Formule Initiative",
+                    "initiativeFormulaNotes": "AVERTISSEMENT : Cette option remplacera les fonctions principales de DND5E et peut causer des problèmes avec d'autres modules. \nÀ utiliser à vos risques et périls.",
+                    "castFromDescription": "Diffuser à partir de liens de contenu",
+                    "castFromDescriptionHint": "Lancez des sorts à partir de liens de contenu dans le champ de description des éléments possédés.",
+                    "sharedInspiration": "Inspiration partagée",
+                    "sharedInspirationHint": "Partagez un pool d'inspiration unique entre tous les joueurs. \nIMPORTANT : Cette fonctionnalité utilisera l'emplacement \"Ressource 3\" et le remplacera sur tous les personnages appartenant au joueur. \nUtilisez la commande de chat '/inspiration' pour attribuer 1 point d'inspiration à chaque joueur ou '/inspiration N' pour attribuer N points d'inspiration au groupe."
+                },
+                "skills": {
+                    "add": "Ajouter une compétence",
+                    "hint": "Personnalisez les compétences",
+                    "name": "Compétences",
+                    "skillAbbreviation": "Abréviation",
+                    "skillAbility": "Capacité",
+                    "skillName": "Nom de compétence"
+                },
+                "spellLevels": {
+                    "add": "Ajouter un niveau de sort",
+                    "hint": "Personnalisez les niveaux de sorts",
+                    "name": "Niveaux de sort",
+                    "spellLevelAbbreviation": "Numéro de niveau de sort",
+                    "spellLevelName": "Nom du niveau d'orthographe"
+                },
+                "spellSchools": {
+                    "add": "Ajouter une école de sorts",
+                    "hint": "Personnalisez les écoles de sorts",
+                    "name": "Écoles d'orthographe",
+                    "spellSchoolAbbreviation": "Abréviation",
+                    "spellSchoolName": "Épeler le nom de l'école"
+                },
+                "classFeatureTypes": {
+                    "add": "Ajouter un type de fonctionnalité de classe",
+                    "classFeatureTypeAbbreviation": "Abréviation",
+                    "classFeatureTypeName": "Nom du type d'entité de classe",
+                    "hint": "Personnaliser les types d'entités de classe",
+                    "name": "Types d'entités de classe"
+                },
+                "currencies": {
+                    "currency": "Monnaie",
+                    "currencyAbbreviation": "Abréviation",
+                    "currencyName": "Nom",
+                    "hint": "Personnalisez les devises",
+                    "name": "Devises"
+                }
+            },
+            "title": "D"
+        },
+        "settings": {
+            "menu": {
+                "hint": "Personnalisez le D",
+                "label": "D",
+                "name": "D"
+            },
+            "configKey": {
+                "hint": "La clé de configuration de votre système",
+                "name": "Clé de configuration"
+            },
+            "enableAdvancedCustomization": {
+                "hint": "Activer les options de personnalisation avancées",
+                "name": "Activer la personnalisation avancée"
+            },
+            "jsonEditor": {
+                "hint": "Ouvrez l'éditeur JSON pour personnaliser votre système. \n« Activer la personnalisation avancée » doit être activé pour utiliser cette fonctionnalité.",
+                "label": "Ouvrir l'éditeur JSON",
+                "name": "Personnalisation du système",
+                "warn": "Important! \nToutes les personnalisations ne fonctionneront pas, cela dépendra de votre système. \nSi une personnalisation ne fonctionne pas ou provoque des erreurs/problèmes, supprimez cette personnalisation ou réinitialisez les paramètres par défaut."
+            }
+        },
+        "castFromDescription": {
+            "tooltip": "Lancer un sort"
+        },
+        "sharedInspiration": {
+            "awarded": "L'inspiration a été décernée à la fête!"
+        },
+        "json-editor-app": {
+            "title": "Personnalisation du système"
+        },
+        "noConfig": "Personnalisateur de système : aucune configuration trouvée pour votre système. \nVotre système peut ne pas prendre en charge les modifications de sa configuration ou vous devrez peut-être saisir manuellement le chemin de configuration dans les paramètres du module. \nSi vous ne savez pas comment identifier la clé de configuration de votre système, veuillez demander de l'aide sur votre canal système."
+    }
+}

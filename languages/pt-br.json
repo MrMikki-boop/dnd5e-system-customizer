@@ -1,0 +1,133 @@
+{
+    "dnd5e-system-customizer": {
+        "CustomizerApp": {
+            "delete": "Excluir",
+            "hide": "Esconder",
+            "save": "Salvar alterações",
+            "tabs": {
+                "abilities": {
+                    "abilityAbbreviation": "Abreviação",
+                    "abilityName": "Nome da habilidade",
+                    "add": "Adicionar capacidade",
+                    "hint": "Personalize as habilidades",
+                    "name": "Habilidades"
+                },
+                "classFeatureTypes": {
+                    "add": "Adicionar tipo de recurso de classe",
+                    "classFeatureTypeAbbreviation": "Abreviação",
+                    "classFeatureTypeName": "Nome do tipo de recurso de classe",
+                    "hint": "Personalize os tipos de recursos de classe",
+                    "name": "Tipos de recursos de classe"
+                },
+                "creatureTypes": {
+                    "add": "Adicionar tipo de criatura",
+                    "creatureAbbreviation": "Abreviação",
+                    "creatureName": "Nome do tipo de criatura",
+                    "hint": "Personalize os tipos de criaturas",
+                    "name": "Tipos de criaturas"
+                },
+                "currencies": {
+                    "currency": "Moeda",
+                    "currencyAbbreviation": "Abreviação",
+                    "currencyName": "Nome",
+                    "hint": "Personalize as moedas",
+                    "name": "Moedas"
+                },
+                "damageTypes": {
+                    "add": "Adicionar tipo de dano",
+                    "damageAbbreviation": "Abreviação",
+                    "damageName": "Nome do tipo de dano",
+                    "hint": "Personalize os tipos de danos",
+                    "name": "Tipos de dano"
+                },
+                "hitDieTypes": {
+                    "add": "Adicionar tipo de dado de acerto",
+                    "hint": "Personalize os tipos de dados de sucesso",
+                    "hitDieName": "Tipo de dado de acerto",
+                    "name": "Dados de sucesso"
+                },
+                "itemRarity": {
+                    "add": "Adicionar raridade de item",
+                    "hint": "Personalize a raridade do item",
+                    "itemRarityAbbreviation": "Abreviação",
+                    "itemRarityName": "Nome da raridade do item",
+                    "name": "Raridade do item"
+                },
+                "languages": {
+                    "add": "Adicionar idioma",
+                    "hint": "Personalize os idiomas",
+                    "languageAbbreviation": "Abreviação",
+                    "languageName": "Nome do idioma",
+                    "name": "línguas"
+                },
+                "misc": {
+                    "castFromDescription": "Transmitir a partir de links de conteúdo",
+                    "castFromDescriptionHint": "Lance feitiços a partir de links de conteúdo no campo de descrição dos itens possuídos.",
+                    "hint": "Personalize os diversos",
+                    "hitPointsAbility": "Habilidade de Pontos de Vida",
+                    "initiativeAbility": "Capacidade de Iniciativa",
+                    "initiativeFormula": "Fórmula de Iniciativa",
+                    "initiativeFormulaNotes": "AVISO: Esta opção substituirá as funções principais do DND5E e poderá causar problemas com outros módulos. \nUse por sua conta e risco.",
+                    "maxLevel": "Nível máximo",
+                    "name": "Diversos",
+                    "sharedInspiration": "Inspiração Compartilhada",
+                    "sharedInspirationHint": "Compartilhe um único conjunto de inspiração entre todos os jogadores. \nIMPORTANTE: Este recurso usará o slot 'Recurso 3' e o substituirá em todos os personagens de propriedade do jogador. \nUse o comando de bate-papo '/inspiration' para conceder 1 ponto de inspiração para cada jogador ou '/inspiration N' para conceder N pontos de inspiração ao grupo."
+                },
+                "skills": {
+                    "add": "Adicionar habilidade",
+                    "hint": "Personalize as habilidades",
+                    "name": "Habilidades",
+                    "skillAbbreviation": "Abreviação",
+                    "skillAbility": "Habilidade",
+                    "skillName": "Nome da habilidade"
+                },
+                "spellLevels": {
+                    "add": "Adicionar nível de feitiço",
+                    "hint": "Personalize os níveis de feitiço",
+                    "name": "Níveis de feitiço",
+                    "spellLevelAbbreviation": "Número do nível do feitiço",
+                    "spellLevelName": "Nome do Nível do Feitiço"
+                },
+                "spellSchools": {
+                    "add": "Adicionar escola de feitiços",
+                    "hint": "Personalize as escolas de feitiços",
+                    "name": "Escolas de Feitiço",
+                    "spellSchoolAbbreviation": "Abreviação",
+                    "spellSchoolName": "Soletrar nome da escola"
+                }
+            },
+            "title": "D"
+        },
+        "castFromDescription": {
+            "tooltip": "Feitiço lançado"
+        },
+        "json-editor-app": {
+            "title": "Personalização do sistema"
+        },
+        "noConfig": "Personalizador de sistema: nenhuma configuração encontrada para seu sistema. \nSeu sistema pode não suportar modificações em sua configuração ou pode ser necessário inserir manualmente o caminho de configuração nas configurações do módulo. \nSe você não sabe como identificar a chave de configuração do seu sistema, peça ajuda no canal do seu sistema.",
+        "settings": {
+            "configKey": {
+                "hint": "A chave de configuração do seu sistema",
+                "name": "Chave de configuração"
+            },
+            "enableAdvancedCustomization": {
+                "hint": "Habilite as opções avançadas de personalização",
+                "name": "Habilitar personalização avançada"
+            },
+            "jsonEditor": {
+                "hint": "Abra o Editor JSON para personalizar seu sistema. \n'Ativar personalização avançada' deve estar ativado para usar este recurso.",
+                "label": "Abra o editor JSON",
+                "name": "Personalização do sistema",
+                "warn": "Importante! \nNem toda personalização funcionará, isso dependerá do seu sistema. \nSe alguma personalização não estiver funcionando ou causando erros/problemas, remova essa personalização ou redefina para os padrões."
+            },
+            "menu": {
+                "hint": "Personalize o D",
+                "label": "D",
+                "name": "D"
+            }
+        },
+        "sharedInspiration": {
+            "awarded": "A inspiração foi premiada para a festa!"
+        }
+    }
+}

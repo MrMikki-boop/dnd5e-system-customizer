@@ -1,0 +1,444 @@
+<form class="flexcol" autocomplete="off">
+  <!-- Config Settings Configuration Tabs -->
+  <nav class="sheet-tabs tabs" data-group="sections">
+    <a class="item" data-tab="abilities"><i class="fa-solid fa-person"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.abilities.name"}}</a>
+    <a class="item" data-tab="skills"><i class="fa-solid fa-person-running"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.skills.name"}}</a>
+    <a class="item" data-tab="damageTypes"><i class="fa-solid fa-fire"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.damageTypes.name"}}</a>
+    <a class="item" data-tab="creatureTypes"><i class="fa-solid fa-spaghetti-monster-flying"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.creatureTypes.name"}}</a>
+    <a class="item" data-tab="languages"><i class="fa-solid fa-language"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.languages.name"}}</a>
+  <a class="item" data-tab="hitDieTypes"><i class="fa-solid fa-dice"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.hitDieTypes.name"}}</a>
+  <a class="item" data-tab="itemRarity"><i class="fa-regular fa-gem"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.itemRarity.name"}}</a>
+  <a class="item" data-tab="spellLevels"><i class="fa-regular fa-book-sparkles"></i> {{localize
+    "dnd5e-system-customizer.CustomizerApp.tabs.spellLevels.name"}}</a>
+  <a class="item" data-tab="spellSchools"><i class="fa-solid fa-books"></i> {{localize
+    "dnd5e-system-customizer.CustomizerApp.tabs.spellSchools.name"}}</a>
+  <a class="item" data-tab="classFeatureTypes"><i class="fa-solid fa-sun"></i> {{localize
+    "dnd5e-system-customizer.CustomizerApp.tabs.classFeatureTypes.name"}}</a>
+  <a class="item" data-tab="currencies"><i class="fa-solid fa-coins"></i> {{localize
+    "dnd5e-system-customizer.CustomizerApp.tabs.currencies.name"}}</a>
+  
+  <a class="item" data-tab="misc"><i class="fa-regular fa-cog"></i> {{localize
+    "dnd5e-system-customizer.CustomizerApp.tabs.misc.name"}}</a>
+  </nav>
+  <section id="config-tabs" class="content">
+    <hr>
+    <!-- Abilities Tab -->
+    <div class="tab" data-tab="abilities" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.abilities.abilityName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.abilities.abilityAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+
+      {{#each ORIGINAL_CONFIG.abilities}}
+      <tr data-ability-id="{{@key}}">
+        <td><input type="text" readonly name="abilities.defaults.{{@key}}.name" value="{{localize label}}"></td>
+        <td><input type="text" readonly name="abilities.defaults.{{@key}}.key" value="{{@key}}"></td>
+        <td class="dsc-td-center"><input type="checkbox" name="abilities.defaults.{{@key}}.hide" {{dscChecked (concat "customizations.abilities.defaults." @key ".hide")}}></td>
+      </tr>
+      {{/each}}
+
+      {{#each customizations.abilities.custom}}
+      <tr data-ability-id="{{@key}}">
+        <td><input type="text" name="abilities.custom.{{@key}}.name" value="{{this.name}}"></td>
+        <td><input type="text" name="abilities.custom.{{@key}}.key" value="{{this.key}}"></td>
+        <td class="dsc-td-center"><input type="checkbox" name="abilities.custom.{{@key}}.hide" {{dscChecked (concat "customizations.abilities.custom." @key ".hide")}}></td>
+        <td><i class="fas fa-trash delete-ability"></i></td>
+      </tr>
+      {{/each}}
+
+      </table>
+
+      <button id="add-ability"><i class="fas fa-plus"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.abilities.add"}}</button>
+
+    </div>
+
+    <!-- Skills Tab -->
+    <div class="tab" data-tab="skills" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.skills.skillName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.skills.skillAbbreviation"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.skills.skillAbility"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+      
+        {{#each ORIGINAL_CONFIG.skills}}
+        <tr data-skill-id="{{@key}}">
+          <td><input type="text" readonly name="skills.defaults.{{@key}}.label" value="{{localize label}}"></td>
+          <td><input type="text" readonly name="skills.defaults.{{@key}}.key" value="{{@key}}"></td>
+          <td><input type="text" readonly name="skills.defaults.{{@key}}.ability" value="{{ability}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="skills.defaults.{{@key}}.hide" {{dscChecked (concat "customizations.skills.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+      
+        {{#each customizations.skills.custom}}
+        <tr data-skill-id="{{@key}}">
+          <td><input type="text" name="skills.custom.{{@key}}.label" value="{{this.label}}"></td>
+          <td><input type="text" name="skills.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td><input type="text" name="skills.custom.{{@key}}.ability" value="{{this.ability}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="skills.custom.{{@key}}.hide" {{dscChecked (concat "customizations.skills.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-skill"></i></td>
+        </tr>
+        {{/each}}
+      
+      </table>
+      
+      <button id="add-skill"><i class="fas fa-plus"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.skills.add"}}</button>
+    </div>
+
+    <!-- Damage Types Tab -->
+    <div class="tab" data-tab="damageTypes" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.damageTypes.damageName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.damageTypes.damageAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+      
+        {{#each ORIGINAL_CONFIG.damageTypes}}
+        <tr data-damage-id="{{@key}}">
+          <td><input type="text" readonly name="damageTypes.defaults.{{@key}}.name" value="{{localize this.label}}"></td>
+          <td><input type="text" readonly name="damageTypes.defaults.{{@key}}.key" value="{{@key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="damageTypes.defaults.{{@key}}.hide" {{dscChecked (concat "customizations.damageTypes.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+      
+        {{#each customizations.damageTypes.custom}}
+        <tr data-damage-id="{{@key}}">
+          <td><input type="text" name="damageTypes.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td><input type="text" name="damageTypes.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="damageTypes.custom.{{@key}}.hide" {{dscChecked (concat "customizations.damageTypes.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-damage-type"></i></td>
+        </tr>
+        {{/each}}
+      
+      </table>
+      
+      <button id="add-damage-type"><i class="fas fa-plus"></i> {{localize "dnd5e-system-customizer.CustomizerApp.tabs.damageTypes.add"}}</button>
+
+    </div>
+
+    <!-- Creature Types Tab -->
+    <div class="tab" data-tab="creatureTypes" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.creatureTypes.creatureName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.creatureTypes.creatureAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+    
+        {{#each ORIGINAL_CONFIG.creatureTypes}}
+        <tr data-creature-id="{{@key}}">
+          <td><input type="text" readonly name="creatureTypes.defaults.{{@key}}.name" value="{{localize this.label}}"></td>
+          <td><input type="text" readonly name="creatureTypes.defaults.{{@key}}.key" value="{{@key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="creatureTypes.defaults.{{@key}}.hide" {{dscChecked
+              (concat "customizations.creatureTypes.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+    
+        {{#each customizations.creatureTypes.custom}}
+        <tr data-creature-id="{{@key}}">
+          <td><input type="text" name="creatureTypes.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td><input type="text" name="creatureTypes.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="creatureTypes.custom.{{@key}}.hide" {{dscChecked
+              (concat "customizations.creatureTypes.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-creature-type"></i></td>
+        </tr>
+        {{/each}}
+    
+      </table>
+    
+      <button id="add-creature-type"><i class="fas fa-plus"></i> {{localize
+        "dnd5e-system-customizer.CustomizerApp.tabs.creatureTypes.add"}}</button>
+    
+    </div>
+
+    <!-- Languages Tab -->
+    <div class="tab" data-tab="languages" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.languages.languageName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.languages.languageAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+
+        {{#each customizations.languages.custom}}
+        <tr data-language-id="{{@key}}">
+          <td><input type="text" name="languages.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td><input type="text" name="languages.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="languages.custom.{{@key}}.hide" {{dscChecked
+              (concat "customizations.languages.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-language"></i></td>
+        </tr>
+        {{/each}}
+    
+      </table>
+    
+      <button id="add-language"><i class="fas fa-plus"></i> {{localize
+        "dnd5e-system-customizer.CustomizerApp.tabs.languages.add"}}</button>
+    
+    </div>
+
+    <!-- HitDie Tab -->
+    <div class="tab" data-tab="hitDieTypes" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.hitDieTypes.hitDieName"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+    
+        {{#each ORIGINAL_CONFIG.hitDieTypes}}
+        <tr data-hit-die-id="{{@key}}">
+          <td><input type="text" readonly name="hitDieTypes.defaults.{{@key}}.name" value="{{localize this}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="hitDieTypes.defaults.{{@key}}.hide" {{dscChecked
+              (concat "customizations.hitDieTypes.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+    
+        {{#each customizations.hitDieTypes.custom}}
+        <tr data-hit-die-id="{{@key}}">
+          <td><input type="text" name="hitDieTypes.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="hitDieTypes.custom.{{@key}}.hide" {{dscChecked
+              (concat "customizations.hitDieTypes.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-hit-die"></i></td>
+        </tr>
+        {{/each}}
+    
+      </table>
+    
+      <button id="add-hit-die"><i class="fas fa-plus"></i> {{localize
+        "dnd5e-system-customizer.CustomizerApp.tabs.hitDieTypes.add"}}</button>
+    
+    </div>
+
+    <!-- Item Rarity Tab -->
+    <div class="tab" data-tab="itemRarity" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.itemRarity.itemRarityName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.itemRarity.itemRarityAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+    
+        {{#each ORIGINAL_CONFIG.itemRarity}}
+        <tr data-item-rarity-id="{{@key}}">
+          <td><input type="text" readonly name="itemRarity.defaults.{{@key}}.name" value="{{localize this}}"></td>
+          <td><input type="text" readonly name="itemRarity.defaults.{{@key}}.key" value="{{@key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="itemRarity.defaults.{{@key}}.hide" {{dscChecked
+              (concat "customizations.itemRarity.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+    
+        {{#each customizations.itemRarity.custom}}
+        <tr data-item-rarity-id="{{@key}}">
+          <td><input type="text" name="itemRarity.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td><input type="text" name="itemRarity.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="itemRarity.custom.{{@key}}.hide" {{dscChecked
+              (concat "customizations.itemRarity.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-item-rarity"></i></td>
+        </tr>
+        {{/each}}
+    
+      </table>
+    
+      <button id="add-item-rarity"><i class="fas fa-plus"></i> {{localize
+        "dnd5e-system-customizer.CustomizerApp.tabs.itemRarity.add"}}</button>
+    
+    </div>
+
+    <!-- Spell Levels Tab -->
+    <div class="tab" data-tab="spellLevels" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.spellLevels.spellLevelName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.spellLevels.spellLevelAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+    
+        {{#each ORIGINAL_CONFIG.spellLevels}}
+        <tr data-spell-level-id="{{@key}}">
+          <td><input type="text" readonly name="spellLevels.defaults.{{@key}}.name" value="{{localize this}}"></td>
+          <td><input type="text" readonly name="spellLevels.defaults.{{@key}}.key" value="{{@key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="spellLevels.defaults.{{@key}}.hide" {{dscChecked
+              (concat "customizations.spellLevels.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+    
+        {{#each customizations.spellLevels.custom}}
+        <tr data-spell-level-id="{{@key}}">
+          <td><input type="text" name="spellLevels.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td><input type="text" name="spellLevels.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="spellLevels.custom.{{@key}}.hide" {{dscChecked
+              (concat "customizations.spellLevels.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-spell-level"></i></td>
+        </tr>
+        {{/each}}
+    
+      </table>
+    
+      <button id="add-spell-level"><i class="fas fa-plus"></i> {{localize
+        "dnd5e-system-customizer.CustomizerApp.tabs.spellLevels.add"}}</button>
+    
+    </div>
+
+    <!-- Spell Schools Tab -->
+    <div class="tab" data-tab="spellSchools" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.spellSchools.spellSchoolName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.spellSchools.spellSchoolAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+
+        {{#each ORIGINAL_CONFIG.spellSchools}}
+        <tr data-spell-school-id="{{@key}}">
+          <td><input type="text" readonly name="spellSchools.defaults.{{@key}}.name" value="{{localize this.label}}"></td>
+          <td><input type="text" readonly name="spellSchools.defaults.{{@key}}.key" value="{{@key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="spellSchools.defaults.{{@key}}.hide" {{dscChecked
+              (concat "customizations.spellSchools.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+
+        {{#each customizations.spellSchools.custom}}
+        <tr data-spell-school-id="{{@key}}">
+          <td><input type="text" name="spellSchools.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td><input type="text" name="spellSchools.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="spellSchools.custom.{{@key}}.hide" {{dscChecked
+              (concat "customizations.spellSchools.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-spell-school"></i></td>
+        </tr>
+        {{/each}}
+
+      </table>
+
+      <button id="add-spell-school"><i class="fas fa-plus"></i> {{localize
+        "dnd5e-system-customizer.CustomizerApp.tabs.spellSchools.add"}}</button>
+
+    </div>
+
+    <!-- Class Feature Type Tab -->
+    <div class="tab" data-tab="classFeatureTypes" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.classFeatureTypes.classFeatureTypeName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.classFeatureTypes.classFeatureTypeAbbreviation"}}</th>
+          <th><i class="fas fa-eye-slash"></i></th>
+          <th><i class="fas fa-trash"></i></th>
+        </tr>
+    
+        {{#each ORIGINAL_CONFIG.featureTypes.class.subtypes}}
+        <tr data-class-feature-id="{{@key}}">
+          <td><input type="text" readonly name="classFeatureTypes.defaults.{{@key}}.name" value="{{localize this}}"></td>
+          <td><input type="text" readonly name="classFeatureTypes.defaults.{{@key}}.key" value="{{@key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="classFeatureTypes.defaults.{{@key}}.hide" {{dscChecked
+              (concat "customizations.classFeatureTypes.defaults." @key ".hide" )}}></td>
+        </tr>
+        {{/each}}
+    
+        {{#each customizations.classFeatureTypes.custom}}
+        <tr data-class-feature-id="{{@key}}">
+          <td><input type="text" name="classFeatureTypes.custom.{{@key}}.name" value="{{this.name}}"></td>
+          <td><input type="text" name="classFeatureTypes.custom.{{@key}}.key" value="{{this.key}}"></td>
+          <td class="dsc-td-center"><input type="checkbox" name="classFeatureTypes.custom.{{@key}}.hide" {{dscChecked
+              (concat "customizations.classFeatureTypes.custom." @key ".hide" )}}></td>
+          <td><i class="fas fa-trash delete-class-feature"></i></td>
+        </tr>
+        {{/each}}
+    
+      </table>
+    
+      <button id="add-class-feature"><i class="fas fa-plus"></i> {{localize
+        "dnd5e-system-customizer.CustomizerApp.tabs.classFeatureTypes.add"}}</button>
+    
+    </div>
+
+        <!-- Class Feature Type Tab -->
+    <div class="tab" data-tab="currencies" data-group="sections">
+      <table>
+        <tr>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.currencies.currency"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.currencies.currencyName"}}</th>
+          <th>{{localize "dnd5e-system-customizer.CustomizerApp.tabs.currencies.currencyAbbreviation"}}</th>
+        </tr>
+    
+        {{#each customizations.currencies.custom}}
+        <tr data-class-currency-id="{{@key}}">
+          <td><input type="text" readonly name="" value="{{@key}}"></td>
+          <td><input type="text" name="currencies.custom.{{@key}}.label" value="{{this.label}}"></td>
+          <td><input type="text" name="currencies.custom.{{@key}}.abbreviation" value="{{this.abbreviation}}"></td>
+        </tr>
+        {{/each}}
+    
+      </table>
+    
+    </div>
+
+    <!-- Misc Tab -->
+    <div class="tab" data-tab="misc" data-group="sections">
+
+      <div class="form-group">
+        <label for="misc.maxLevel">{{localize "dnd5e-system-customizer.CustomizerApp.tabs.misc.maxLevel"}}</label>
+        <div class="form-fields">
+          <input type="number" placeholder="{{ORIGINAL_CONFIG.maxLevel}}" value="{{customizations.misc.maxLevel}}" step="1" name="misc.maxLevel">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="misc.initiativeAbility">{{localize "dnd5e-system-customizer.CustomizerApp.tabs.misc.initiativeAbility"}}</label>
+        <div class="form-fields">
+          <input type="text" placeholder="{{ORIGINAL_CONFIG.initiativeAbility}}" value="{{customizations.misc.initiativeAbility}}"
+            name="misc.initiativeAbility">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="misc.initiativeFormula">{{localize
+          "dnd5e-system-customizer.CustomizerApp.tabs.misc.initiativeFormula"}}</label>
+        <div class="form-fields">
+          <input type="text" placeholder="1d20"
+            value="{{customizations.misc.initiativeFormula}}" name="misc.initiativeFormula">
+        </div>
+        <p class="notes">{{localize "dnd5e-system-customizer.CustomizerApp.tabs.misc.initiativeFormulaNotes"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="misc.hitPointsAbility">{{localize "dnd5e-system-customizer.CustomizerApp.tabs.misc.hitPointsAbility"}}</label>
+        <div class="form-fields">
+          <input type="text" placeholder="{{ORIGINAL_CONFIG.hitPointsAbility}}" value="{{customizations.misc.hitPointsAbility}}" 
+            name="misc.hitPointsAbility">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="misc.castFromDescription">{{localize
+          "dnd5e-system-customizer.CustomizerApp.tabs.misc.castFromDescription"}}</label>
+        <div class="form-fields">
+          <input type="checkbox" {{checked customizations.misc.castFromDescription}} name="misc.castFromDescription">
+        </div>
+        <p class="notes">{{localize "dnd5e-system-customizer.CustomizerApp.tabs.misc.castFromDescriptionHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="misc.sharedInspiration">{{localize
+          "dnd5e-system-customizer.CustomizerApp.tabs.misc.sharedInspiration"}}</label>
+        <div class="form-fields">
+          <input type="checkbox" {{checked customizations.misc.sharedInspiration}} name="misc.sharedInspiration">
+        </div>
+        <p class="notes">{{localize "dnd5e-system-customizer.CustomizerApp.tabs.misc.sharedInspirationHint"}}</p>
+      </div>
+    
+    </div>
+
+  </section>
+</form>

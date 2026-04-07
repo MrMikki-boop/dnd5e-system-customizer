@@ -1,0 +1,133 @@
+{
+    "dnd5e-system-customizer": {
+        "CustomizerApp": {
+            "delete": "Löschen",
+            "hide": "Verstecken",
+            "save": "Änderungen speichern",
+            "tabs": {
+                "abilities": {
+                    "abilityAbbreviation": "Abkürzung",
+                    "abilityName": "Fähigkeitsname",
+                    "add": "Fähigkeit hinzufügen",
+                    "hint": "Passen Sie die Fähigkeiten an",
+                    "name": "Fähigkeiten"
+                },
+                "creatureTypes": {
+                    "add": "Kreaturentyp hinzufügen",
+                    "creatureAbbreviation": "Abkürzung",
+                    "creatureName": "Name des Kreaturentyps",
+                    "hint": "Passen Sie die Kreaturentypen an",
+                    "name": "Kreaturentypen"
+                },
+                "damageTypes": {
+                    "add": "Schadensart hinzufügen",
+                    "damageAbbreviation": "Abkürzung",
+                    "damageName": "Name des Schadenstyps",
+                    "hint": "Passen Sie die Schadensarten an",
+                    "name": "Schadensarten"
+                },
+                "hitDieTypes": {
+                    "add": "Schlagwürfeltyp hinzufügen",
+                    "hint": "Passen Sie die Trefferwürfeltypen an",
+                    "hitDieName": "Klicken Sie auf Würfeltyp",
+                    "name": "Schlage Würfel"
+                },
+                "itemRarity": {
+                    "add": "Item-Seltenheit hinzufügen",
+                    "hint": "Passen Sie die Seltenheit des Gegenstands an",
+                    "itemRarityAbbreviation": "Abkürzung",
+                    "itemRarityName": "Seltenheitsname des Gegenstands",
+                    "name": "Seltenheit des Gegenstands"
+                },
+                "languages": {
+                    "add": "Sprache hinzufügen",
+                    "hint": "Passen Sie die Sprachen an",
+                    "languageAbbreviation": "Abkürzung",
+                    "languageName": "Sprache Name",
+                    "name": "Sprachen"
+                },
+                "misc": {
+                    "hint": "Passen Sie das Verschiedenes an",
+                    "hitPointsAbility": "Trefferpunkte-Fähigkeit",
+                    "initiativeAbility": "Initiativefähigkeit",
+                    "maxLevel": "Maximales Level",
+                    "name": "Sonstig",
+                    "initiativeFormula": "Initiative-Formel",
+                    "initiativeFormulaNotes": "WARNUNG: Diese Option setzt Kernfunktionen von DND5E außer Kraft und kann Probleme mit anderen Modulen verursachen. \nBenutzung auf eigene Gefahr.",
+                    "castFromDescription": "Aus Content-Links umwandeln",
+                    "castFromDescriptionHint": "Wirke Zauber über Inhaltslinks im Beschreibungsfeld der eigenen Gegenstände.",
+                    "sharedInspiration": "Geteilte Inspiration",
+                    "sharedInspirationHint": "Teilen Sie einen einzigen Inspirationspool zwischen allen Spielern. \nWICHTIG: Diese Funktion nutzt den „Ressource 3“-Slot und überschreibt ihn bei allen Spielercharakteren. \nVerwenden Sie den Chat-Befehl „/inspiration“, um 1 Inspirationspunkt für jeden Spieler zu vergeben, oder „/inspiration N“, um der Gruppe N Inspirationspunkte zu verleihen."
+                },
+                "skills": {
+                    "add": "Fertigkeit hinzufügen",
+                    "hint": "Passen Sie die Fähigkeiten an",
+                    "name": "Fähigkeiten",
+                    "skillAbbreviation": "Abkürzung",
+                    "skillAbility": "Fähigkeit",
+                    "skillName": "Fertigkeitsname"
+                },
+                "spellLevels": {
+                    "add": "Zauberstufe hinzufügen",
+                    "hint": "Passen Sie die Zauberstufen an",
+                    "name": "Zauberstufen",
+                    "spellLevelAbbreviation": "Zauberstufennummer",
+                    "spellLevelName": "Name der Zauberebene"
+                },
+                "spellSchools": {
+                    "add": "Zauberschule hinzufügen",
+                    "hint": "Passen Sie die Zauberschulen an",
+                    "name": "Zauberschulen",
+                    "spellSchoolAbbreviation": "Abkürzung",
+                    "spellSchoolName": "Schulnamen buchstabieren"
+                },
+                "classFeatureTypes": {
+                    "add": "Klassenmerkmalstyp hinzufügen",
+                    "classFeatureTypeAbbreviation": "Abkürzung",
+                    "classFeatureTypeName": "Name des Klassenmerkmaltyps",
+                    "hint": "Passen Sie die Klassenmerkmalstypen an",
+                    "name": "Klassenmerkmalstypen"
+                },
+                "currencies": {
+                    "currency": "Währung",
+                    "currencyAbbreviation": "Abkürzung",
+                    "currencyName": "Name",
+                    "hint": "Passen Sie die Währungen an",
+                    "name": "Währungen"
+                }
+            },
+            "title": "D"
+        },
+        "settings": {
+            "menu": {
+                "hint": "Passen Sie das D an",
+                "label": "D",
+                "name": "D"
+            },
+            "configKey": {
+                "hint": "Der Konfigurationsschlüssel für Ihr System",
+                "name": "Konfigurationsschlüssel"
+            },
+            "enableAdvancedCustomization": {
+                "hint": "Aktivieren Sie die erweiterten Anpassungsoptionen",
+                "name": "Aktivieren Sie die erweiterte Anpassung"
+            },
+            "jsonEditor": {
+                "hint": "Öffnen Sie den JSON-Editor, um Ihr System anzupassen. \n„Erweiterte Anpassung aktivieren“ muss aktiviert sein, um diese Funktion nutzen zu können.",
+                "label": "Öffnen Sie den JSON-Editor",
+                "name": "Systemanpassung",
+                "warn": "Wichtig! \nNicht jede Anpassung funktioniert, dies hängt von Ihrem System ab. \nWenn eine Anpassung nicht funktioniert oder Fehler/Probleme verursacht, entfernen Sie diese Anpassung oder setzen Sie sie auf die Standardeinstellungen zurück."
+            }
+        },
+        "castFromDescription": {
+            "tooltip": "Zauber wirken"
+        },
+        "sharedInspiration": {
+            "awarded": "Die Party wurde mit Inspiration ausgezeichnet!"
+        },
+        "json-editor-app": {
+            "title": "Systemanpassung"
+        },
+        "noConfig": "System-Customizer: Für Ihr System wurde keine Konfiguration gefunden. \nMöglicherweise unterstützt Ihr System keine Änderungen an seiner Konfiguration oder Sie müssen den Konfigurationspfad manuell in die Moduleinstellungen eingeben. \nWenn Sie nicht wissen, wie Sie den Konfigurationsschlüssel Ihres Systems identifizieren können, bitten Sie bitte in Ihrem Systemkanal um Hilfe."
+    }
+}

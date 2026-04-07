@@ -1,0 +1,133 @@
+{
+    "dnd5e-system-customizer": {
+        "CustomizerApp": {
+            "delete": "Eliminare",
+            "hide": "Nascondere",
+            "save": "Salvare le modifiche",
+            "tabs": {
+                "abilities": {
+                    "abilityAbbreviation": "Abbreviazione",
+                    "abilityName": "Nome abilità",
+                    "add": "Aggiungi abilità",
+                    "hint": "Personalizza le abilità",
+                    "name": "Abilità"
+                },
+                "creatureTypes": {
+                    "add": "Aggiungi tipo di creatura",
+                    "creatureAbbreviation": "Abbreviazione",
+                    "creatureName": "Nome del tipo di creatura",
+                    "hint": "Personalizza i tipi di creatura",
+                    "name": "Tipi di creature"
+                },
+                "damageTypes": {
+                    "add": "Aggiungi tipo di danno",
+                    "damageAbbreviation": "Abbreviazione",
+                    "damageName": "Nome del tipo di danno",
+                    "hint": "Personalizza i tipi di danno",
+                    "name": "Tipi di danno"
+                },
+                "hitDieTypes": {
+                    "add": "Aggiungi il tipo di dado colpito",
+                    "hint": "Personalizza i tipi di dadi vita",
+                    "hitDieName": "Colpisci il tipo di dado",
+                    "name": "Dadi vita"
+                },
+                "itemRarity": {
+                    "add": "Aggiungi la rarità dell'oggetto",
+                    "hint": "Personalizza la rarità dell'oggetto",
+                    "itemRarityAbbreviation": "Abbreviazione",
+                    "itemRarityName": "Articolo Rarità Nome",
+                    "name": "Oggetto Rarità"
+                },
+                "languages": {
+                    "add": "Aggiungi lingua",
+                    "hint": "Personalizza le lingue",
+                    "languageAbbreviation": "Abbreviazione",
+                    "languageName": "Nome lingua",
+                    "name": "Le lingue"
+                },
+                "misc": {
+                    "hint": "Personalizza le Varie",
+                    "hitPointsAbility": "Abilità punti ferita",
+                    "initiativeAbility": "Capacità di iniziativa",
+                    "maxLevel": "Livello massimo",
+                    "name": "Varie",
+                    "initiativeFormula": "Formula di iniziativa",
+                    "initiativeFormulaNotes": "ATTENZIONE: questa opzione sovrascriverà le funzioni principali di DND5E e potrebbe causare problemi con altri moduli. \nUtilizzare a proprio rischio.",
+                    "castFromDescription": "Trasmetti dai collegamenti ai contenuti",
+                    "castFromDescriptionHint": "Lancia incantesimi dai collegamenti ai contenuti nel campo della descrizione degli oggetti posseduti.",
+                    "sharedInspiration": "Ispirazione condivisa",
+                    "sharedInspirationHint": "Condividi un unico pool di ispirazione tra tutti i giocatori. \nIMPORTANTE: questa funzione utilizzerà lo slot \"Risorsa 3\" e lo sovrascriverà su tutti i personaggi di proprietà del giocatore. \nUsa il comando di chat '/inspiration' per assegnare 1 punto ispirazione a ciascun giocatore o '/inspiration N' per assegnare N punti ispirazione al gruppo."
+                },
+                "skills": {
+                    "add": "Aggiungi abilità",
+                    "hint": "Personalizza le abilità",
+                    "name": "Competenze",
+                    "skillAbbreviation": "Abbreviazione",
+                    "skillAbility": "Capacità",
+                    "skillName": "Nome abilità"
+                },
+                "spellLevels": {
+                    "add": "Aggiungi livello di incantesimo",
+                    "hint": "Personalizza i livelli degli incantesimi",
+                    "name": "Livelli di incantesimo",
+                    "spellLevelAbbreviation": "Numero del livello dell'incantesimo",
+                    "spellLevelName": "Nome del livello dell'incantesimo"
+                },
+                "spellSchools": {
+                    "add": "Aggiungi la scuola degli incantesimi",
+                    "hint": "Personalizza le scuole di incantesimi",
+                    "name": "Scuole di incantesimi",
+                    "spellSchoolAbbreviation": "Abbreviazione",
+                    "spellSchoolName": "Scrivi il nome della scuola"
+                },
+                "classFeatureTypes": {
+                    "add": "Aggiungi tipo di caratteristica di classe",
+                    "classFeatureTypeAbbreviation": "Abbreviazione",
+                    "classFeatureTypeName": "Nome del tipo di funzionalità di classe",
+                    "hint": "Personalizza i tipi di funzionalità di classe",
+                    "name": "Tipi di funzionalità di classe"
+                },
+                "currencies": {
+                    "currency": "Valuta",
+                    "currencyAbbreviation": "Abbreviazione",
+                    "currencyName": "Nome",
+                    "hint": "Personalizza le valute",
+                    "name": "Valute"
+                }
+            },
+            "title": "D"
+        },
+        "settings": {
+            "menu": {
+                "hint": "Personalizza la D",
+                "label": "D",
+                "name": "D"
+            },
+            "configKey": {
+                "hint": "La chiave di configurazione per il tuo sistema",
+                "name": "Chiave di configurazione"
+            },
+            "enableAdvancedCustomization": {
+                "hint": "Abilita le opzioni di personalizzazione avanzate",
+                "name": "Abilita la personalizzazione avanzata"
+            },
+            "jsonEditor": {
+                "hint": "Apri l'editor JSON per personalizzare il tuo sistema. \nPer utilizzare questa funzione è necessario abilitare \"Abilita personalizzazione avanzata\".",
+                "label": "Apri l'editor JSON",
+                "name": "Personalizzazione del sistema",
+                "warn": "Importante! \nNon tutte le personalizzazioni funzioneranno, dipenderà dal tuo sistema. \nSe una personalizzazione non funziona o causa errori/problemi, rimuovila o ripristina le impostazioni predefinite."
+            }
+        },
+        "castFromDescription": {
+            "tooltip": "Lanciare un incantesimo"
+        },
+        "sharedInspiration": {
+            "awarded": "L'ispirazione è stata premiata alla festa!"
+        },
+        "json-editor-app": {
+            "title": "Personalizzazione del sistema"
+        },
+        "noConfig": "Personalizzazione del sistema: nessuna configurazione trovata per il tuo sistema. \nIl tuo sistema potrebbe non supportare modifiche alla sua configurazione oppure potresti dover inserire manualmente il percorso di configurazione nelle impostazioni del modulo. \nSe non sai come identificare la chiave di configurazione del tuo sistema, chiedi aiuto nel tuo canale di sistema."
+    }
+}

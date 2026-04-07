@@ -1,0 +1,75 @@
+{
+  "title": "System Customizer",
+  "description": "Customize your game system to your liking.",
+  "id": "dnd5e-system-customizer",
+  "version": "13.0.0",
+  "authors": [
+    {
+      "name": "theripper93",
+      "email": "tsplab@gmail.com",
+      "url": "https://www.patreon.com/theripper93"
+    },
+    {
+      "name": "MaxKoffing",
+      "url": ""
+    },
+    {
+      "name": "Tenzao",
+      "url": ""
+    }
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    },
+    {
+      "lang": "it",
+      "name": "Italiano",
+      "path": "languages/it.json"
+    },
+    {
+      "lang": "de",
+      "name": "Deutsch",
+      "path": "languages/de.json"
+    },
+    {
+      "lang": "fr",
+      "name": "Français",
+      "path": "languages/fr.json"
+    },
+    {
+      "lang": "es",
+      "name": "Español",
+      "path": "languages/es.json"
+    },
+    {
+      "lang": "ru",
+      "name": "Русский",
+      "path": "languages/ru.json"
+    },
+    {
+      "lang": "ja",
+      "name": "日本語",
+      "path": "languages/ja.json"
+    }
+  ],
+  "scripts": [],
+  "esmodules": [
+    "index.js"
+  ],
+  "styles": [
+    "styles/module.css"
+  ],
+  "packs": [],
+  "url": "",
+  "relationships": {
+    "systems": []
+  },
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "manifest": "https://r2.foundryvtt.com/packages-public/dnd5e-system-customizer/module.json"
+}

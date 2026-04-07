@@ -1,0 +1,133 @@
+{
+    "dnd5e-system-customizer": {
+        "CustomizerApp": {
+            "delete": "消去",
+            "hide": "隠れる",
+            "save": "変更内容を保存",
+            "tabs": {
+                "abilities": {
+                    "abilityAbbreviation": "略語",
+                    "abilityName": "能力名",
+                    "add": "アビリティ追加",
+                    "hint": "アビリティをカスタマイズする",
+                    "name": "能力"
+                },
+                "creatureTypes": {
+                    "add": "クリーチャータイプを追加",
+                    "creatureAbbreviation": "略語",
+                    "creatureName": "クリーチャータイプ名",
+                    "hint": "クリーチャーの種類をカスタマイズする",
+                    "name": "生き物の種類"
+                },
+                "damageTypes": {
+                    "add": "ダメージタイプ追加",
+                    "damageAbbreviation": "略語",
+                    "damageName": "ダメージタイプ名",
+                    "hint": "ダメージタイプをカスタマイズする",
+                    "name": "ダメージの種類"
+                },
+                "hitDieTypes": {
+                    "add": "ヒットダイタイプ追加",
+                    "hint": "ヒットダイの種類をカスタマイズする",
+                    "hitDieName": "ヒットダイタイプ",
+                    "name": "ヒットダイス"
+                },
+                "itemRarity": {
+                    "add": "アイテムのレアリティを追加",
+                    "hint": "アイテムのレア度をカスタマイズする",
+                    "itemRarityAbbreviation": "略語",
+                    "itemRarityName": "アイテムレアリティ名",
+                    "name": "アイテムのレア度"
+                },
+                "languages": {
+                    "add": "言語を追加",
+                    "hint": "言語をカスタマイズする",
+                    "languageAbbreviation": "略語",
+                    "languageName": "言語名",
+                    "name": "言語"
+                },
+                "misc": {
+                    "hint": "その他のカスタマイズ",
+                    "hitPointsAbility": "ヒットポイントアビリティ",
+                    "initiativeAbility": "イニシアチブ能力",
+                    "maxLevel": "最大レベル",
+                    "name": "その他",
+                    "initiativeFormula": "イニシアチブ式",
+                    "initiativeFormulaNotes": "警告: このオプションはコア DND5E 機能をオーバーライドし、他のモジュールで問題を引き起こす可能性があります。\n自己責任。",
+                    "castFromDescription": "コンテンツリンクからキャスト",
+                    "castFromDescriptionHint": "所有アイテムの説明フィールドにあるコンテンツ リンクから呪文を唱えます。",
+                    "sharedInspiration": "共有されたインスピレーション",
+                    "sharedInspirationHint": "すべてのプレイヤー間で 1 つのインスピレーション プールを共有します。\n重要: この機能は「リソース 3」スロットを使用し、プレイヤーが所有するすべてのキャラクターでそれをオーバーライドします。 \n「/インスピレーション」チャット コマンドを使用して各プレイヤーに 1 インスピレーション ポイントを付与するか、「/インスピレーション N」を使用してパーティに N インスピレーション ポイントを付与します。"
+                },
+                "skills": {
+                    "add": "スキルを追加",
+                    "hint": "スキルをカスタマイズする",
+                    "name": "スキル",
+                    "skillAbbreviation": "略語",
+                    "skillAbility": "能力",
+                    "skillName": "スキル名"
+                },
+                "spellLevels": {
+                    "add": "呪文レベル追加",
+                    "hint": "呪文レベルをカスタマイズする",
+                    "name": "呪文レベル",
+                    "spellLevelAbbreviation": "呪文レベル番号",
+                    "spellLevelName": "呪文レベル名"
+                },
+                "spellSchools": {
+                    "add": "スペルスクールを追加",
+                    "hint": "スペルスクールをカスタマイズする",
+                    "name": "スペルスクール",
+                    "spellSchoolAbbreviation": "略語",
+                    "spellSchoolName": "スペルスクール名"
+                },
+                "classFeatureTypes": {
+                    "add": "クラス フィーチャ タイプを追加",
+                    "classFeatureTypeAbbreviation": "略語",
+                    "classFeatureTypeName": "クラス フィーチャ タイプ名",
+                    "hint": "クラス フィーチャ タイプのカスタマイズ",
+                    "name": "クラス機能タイプ"
+                },
+                "currencies": {
+                    "currency": "通貨",
+                    "currencyAbbreviation": "略語",
+                    "currencyName": "名前",
+                    "hint": "通貨をカスタマイズする",
+                    "name": "通貨"
+                }
+            },
+            "title": "D"
+        },
+        "settings": {
+            "menu": {
+                "hint": "Dをカスタマイズする",
+                "label": "D",
+                "name": "D"
+            },
+            "configKey": {
+                "hint": "システムの構成キー",
+                "name": "設定キー"
+            },
+            "enableAdvancedCustomization": {
+                "hint": "高度なカスタマイズ オプションを有効にする",
+                "name": "高度なカスタマイズを有効にする"
+            },
+            "jsonEditor": {
+                "hint": "JSON エディタを開いてシステムをカスタマイズします。\nこの機能を使用するには、「高度なカスタマイズを有効にする」を有効にする必要があります。",
+                "label": "JSONエディタを開く",
+                "name": "システムのカスタマイズ",
+                "warn": "重要！\nすべてのカスタマイズが機能するわけではありません。これはシステムによって異なります。\nカスタマイズが機能しない場合、またはエラーや問題が発生する場合は、そのカスタマイズを削除するか、デフォルトにリセットします。"
+            }
+        },
+        "castFromDescription": {
+            "tooltip": "おまじない"
+        },
+        "sharedInspiration": {
+            "awarded": "パーティーにインスピレーションが与えられました!"
+        },
+        "json-editor-app": {
+            "title": "システムのカスタマイズ"
+        },
+        "noConfig": "システム カスタマイザー: システムの構成が見つかりません。\nシステムが構成の変更をサポートしていない可能性があります。または、モジュール設定に構成パスを手動で入力する必要がある場合があります。\nシステムの構成キーを識別する方法がわからない場合は、システム チャネルでサポートを求めてください。"
+    }
+}
