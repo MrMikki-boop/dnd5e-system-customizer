@@ -379,7 +379,6 @@ code.sc-key {
 .sc-icon-row {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
 }
 
@@ -433,6 +432,70 @@ code.sc-key {
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.sc-th-sep {
+  opacity: 0.25;
+  margin: 0 3px;
+}
+
+.sc-access-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-hide-check {
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0 !important;
+  accent-color: #ffd700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sc-access-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  color: #8a7a65;
+}
+
+.sc-access-btn i {
+  font-size: 11px;
+  margin: 0 !important;
+  line-height: 1;
+  display: block;
+}
+
+.sc-access-btn:hover {
+  background: rgba(255, 215, 0, 0.08);
+  border-color: rgba(255, 215, 0, 0.5);
+  color: #ffd700;
+}
+
+.sc-access-btn--active {
+  background: rgba(76, 175, 80, 0.18);
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.sc-access-btn--active:hover {
+  background: rgba(76, 175, 80, 0.28);
+  border-color: #66bb6a;
+  color: #66bb6a;
 }
 
 .window-header .header-button i.fa-patreon,

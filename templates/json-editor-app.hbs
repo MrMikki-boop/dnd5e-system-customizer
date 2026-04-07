@@ -18,6 +18,7 @@
         <section class="tab" data-tab="abilities" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Характеристики персонажа</div>
+                <div class="sc-tab-hint">Изменяй названия стандартных характеристик или добавляй новые. Галочка скрывает характеристику от игроков, кнопка 👥 задаёт исключения.</div>
             </div>
             <table id="sc-table-abilities" class="sc-table">
                 <thead>
@@ -25,9 +26,7 @@
                     <th style="width:80px">Ключ</th>
                     <th>Название</th>
                     <th style="width:70px">Сокращение</th>
-                    <th style="width:90px; text-align:center;" title="Скрыть / Исключения">
-                        <i class="fas fa-eye-slash" style="color:#a89a80;"></i> <span style="opacity:0.3; margin:0 3px;">|</span> <i class="fas fa-users" style="color:#a89a80; margin-left:1px;"></i>
-                    </th>
+                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
                     <th style="width:36px"></th>
                 </tr>
                 </thead>
@@ -35,13 +34,16 @@
                 {{#each abilities}}
                     <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
                         <td><code class="sc-key">{{key}}</code></td>
-                        <td><input type="text" name="abilities.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                        <td>
+                            <input type="text" name="abilities.{{key}}.label" value="{{label}}" placeholder="{{label}}">
+                            {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
+                        </td>
                         <td><input type="text" name="abilities.{{key}}.abbr" value="{{abbr}}" style="width:56px"></td>
                         <td class="sc-td-center">
-                            <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
-                                <input type="checkbox" name="abilities.{{key}}.hidden" {{#if hidden}}checked{{/if}} title="Скрыть для всех" style="margin:0; width:16px; height:16px; cursor:pointer;">
-                                <button type="button" class="sc-access-btn" title="Исключения (кому видно)" style="display:flex; justify-content:center; align-items:center; width:24px; height:24px; margin:0; padding:0; background:{{#if allowedUsers}}rgba(76,175,80,0.2){{else}}rgba(0,0,0,0.3){{/if}}; border:1px solid {{#if allowedUsers}}#4caf50{{else}}rgba(255,215,0,0.3){{/if}}; color:{{#if allowedUsers}}#4caf50{{else}}#ffd700{{/if}}; border-radius:4px; cursor:pointer; transition:all 0.2s;">
-                                    <i class="fas fa-users" style="font-size:11px; margin-left:1px;"></i>
+                            <div class="sc-access-group">
+                                <input type="checkbox" name="abilities.{{key}}.hidden" {{#if hidden}}checked{{/if}} title="Скрыть для всех" class="sc-hide-check">
+                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения (кому видно)">
+                                    <i class="fas fa-users"></i>
                                 </button>
                                 <input type="hidden" name="abilities.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
                             </div>
@@ -60,6 +62,7 @@
         <section class="tab" data-tab="skills" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Навыки</div>
+                <div class="sc-tab-hint">Изменяй названия навыков, меняй привязанную характеристику. Список характеристик включает твои кастомные.</div>
             </div>
             <table id="sc-table-skills" class="sc-table">
                 <thead>
@@ -67,9 +70,7 @@
                     <th style="width:70px">Ключ</th>
                     <th>Название навыка</th>
                     <th style="width:110px">Характеристика</th>
-                    <th style="width:90px; text-align:center;" title="Скрыть / Исключения">
-                        <i class="fas fa-eye-slash" style="color:#a89a80;"></i> <span style="opacity:0.3; margin:0 3px;">|</span> <i class="fas fa-users" style="color:#a89a80; margin-left:1px;"></i>
-                    </th>
+                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
                     <th style="width:36px"></th>
                 </tr>
                 </thead>
@@ -77,7 +78,10 @@
                 {{#each skills}}
                     <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
                         <td><code class="sc-key">{{key}}</code></td>
-                        <td><input type="text" name="skills.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                        <td>
+                            <input type="text" name="skills.{{key}}.label" value="{{label}}" placeholder="{{label}}">
+                            {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
+                        </td>
                         <td>
                             <select name="skills.{{key}}.ability" style="width:100px">
                                 {{#each abilityOptions}}
@@ -86,10 +90,10 @@
                             </select>
                         </td>
                         <td class="sc-td-center">
-                            <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
-                                <input type="checkbox" name="skills.{{key}}.hidden" {{#if hidden}}checked{{/if}} title="Скрыть для всех" style="margin:0; width:16px; height:16px; cursor:pointer;">
-                                <button type="button" class="sc-access-btn" title="Исключения (кому видно)" style="display:flex; justify-content:center; align-items:center; width:24px; height:24px; margin:0; padding:0; background:{{#if allowedUsers}}rgba(76,175,80,0.2){{else}}rgba(0,0,0,0.3){{/if}}; border:1px solid {{#if allowedUsers}}#4caf50{{else}}rgba(255,215,0,0.3){{/if}}; color:{{#if allowedUsers}}#4caf50{{else}}#ffd700{{/if}}; border-radius:4px; cursor:pointer; transition:all 0.2s;">
-                                    <i class="fas fa-users" style="font-size:11px; margin-left:1px;"></i>
+                            <div class="sc-access-group">
+                                <input type="checkbox" name="skills.{{key}}.hidden" {{#if hidden}}checked{{/if}} title="Скрыть для всех" class="sc-hide-check">
+                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения (кому видно)">
+                                    <i class="fas fa-users"></i>
                                 </button>
                                 <input type="hidden" name="skills.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
                             </div>
@@ -108,15 +112,14 @@
         <section class="tab" data-tab="weapons" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Типы оружия</div>
+                <div class="sc-tab-hint">Переименовывай категории оружия или добавляй свои.</div>
             </div>
             <table id="sc-table-weapons" class="sc-table">
                 <thead>
                 <tr>
                     <th style="width:100px">Ключ</th>
                     <th>Название</th>
-                    <th style="width:90px; text-align:center;" title="Скрыть / Исключения">
-                        <i class="fas fa-eye-slash" style="color:#a89a80;"></i> <span style="opacity:0.3; margin:0 3px;">|</span> <i class="fas fa-users" style="color:#a89a80; margin-left:1px;"></i>
-                    </th>
+                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
                     <th style="width:36px"></th>
                 </tr>
                 </thead>
@@ -126,10 +129,10 @@
                         <td><code class="sc-key">{{key}}</code></td>
                         <td><input type="text" name="weaponTypes.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
                         <td class="sc-td-center">
-                            <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
-                                <input type="checkbox" name="weaponTypes.{{key}}.hidden" {{#if hidden}}checked{{/if}} style="margin:0; width:16px; height:16px; cursor:pointer;">
-                                <button type="button" class="sc-access-btn" title="Исключения" style="display:flex; justify-content:center; align-items:center; width:24px; height:24px; margin:0; padding:0; background:{{#if allowedUsers}}rgba(76,175,80,0.2){{else}}rgba(0,0,0,0.3){{/if}}; border:1px solid {{#if allowedUsers}}#4caf50{{else}}rgba(255,215,0,0.3){{/if}}; color:{{#if allowedUsers}}#4caf50{{else}}#ffd700{{/if}}; border-radius:4px; cursor:pointer; transition:all 0.2s;">
-                                    <i class="fas fa-users" style="font-size:11px; margin-left:1px;"></i>
+                            <div class="sc-access-group">
+                                <input type="checkbox" name="weaponTypes.{{key}}.hidden" {{#if hidden}}checked{{/if}} class="sc-hide-check">
+                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения">
+                                    <i class="fas fa-users"></i>
                                 </button>
                                 <input type="hidden" name="weaponTypes.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
                             </div>
@@ -148,15 +151,14 @@
         <section class="tab" data-tab="alignments" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Мировоззрения</div>
+                <div class="sc-tab-hint">Изменяй названия мировоззрений или добавляй свои для нестандартных сеттингов.</div>
             </div>
             <table id="sc-table-alignments" class="sc-table">
                 <thead>
                 <tr>
                     <th style="width:60px">Ключ</th>
                     <th>Название</th>
-                    <th style="width:90px; text-align:center;" title="Скрыть / Исключения">
-                        <i class="fas fa-eye-slash" style="color:#a89a80;"></i> <span style="opacity:0.3; margin:0 3px;">|</span> <i class="fas fa-users" style="color:#a89a80; margin-left:1px;"></i>
-                    </th>
+                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
                     <th style="width:36px"></th>
                 </tr>
                 </thead>
@@ -166,10 +168,10 @@
                         <td><code class="sc-key">{{key}}</code></td>
                         <td><input type="text" name="alignments.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
                         <td class="sc-td-center">
-                            <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
-                                <input type="checkbox" name="alignments.{{key}}.hidden" {{#if hidden}}checked{{/if}} style="margin:0; width:16px; height:16px; cursor:pointer;">
-                                <button type="button" class="sc-access-btn" title="Исключения" style="display:flex; justify-content:center; align-items:center; width:24px; height:24px; margin:0; padding:0; background:{{#if allowedUsers}}rgba(76,175,80,0.2){{else}}rgba(0,0,0,0.3){{/if}}; border:1px solid {{#if allowedUsers}}#4caf50{{else}}rgba(255,215,0,0.3){{/if}}; color:{{#if allowedUsers}}#4caf50{{else}}#ffd700{{/if}}; border-radius:4px; cursor:pointer; transition:all 0.2s;">
-                                    <i class="fas fa-users" style="font-size:11px; margin-left:1px;"></i>
+                            <div class="sc-access-group">
+                                <input type="checkbox" name="alignments.{{key}}.hidden" {{#if hidden}}checked{{/if}} class="sc-hide-check">
+                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения">
+                                    <i class="fas fa-users"></i>
                                 </button>
                                 <input type="hidden" name="alignments.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
                             </div>
@@ -188,16 +190,15 @@
         <section class="tab" data-tab="damage" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Типы урона</div>
+                <div class="sc-tab-hint">Переименовывай типы урона или добавляй нестандартные. Иконка обязательна — нажми 🖼 чтобы выбрать из браузера файлов.</div>
             </div>
             <table id="sc-table-damage" class="sc-table">
                 <thead>
                 <tr>
                     <th style="width:100px">Ключ</th>
                     <th style="width:160px">Название</th>
-                    <th style="width:100px; text-align:center;">Иконка</th>
-                    <th style="width:90px; text-align:center;" title="Скрыть / Исключения">
-                        <i class="fas fa-eye-slash" style="color:#a89a80;"></i> <span style="opacity:0.3; margin:0 3px;">|</span> <i class="fas fa-users" style="color:#a89a80; margin-left:1px;"></i>
-                    </th>
+                    <th style="width:70px" class="sc-td-center">Иконка</th>
+                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
                     <th style="width:36px"></th>
                 </tr>
                 </thead>
@@ -214,10 +215,10 @@
                             </div>
                         </td>
                         <td class="sc-td-center">
-                            <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
-                                <input type="checkbox" name="damageTypes.{{key}}.hidden" {{#if hidden}}checked{{/if}} style="margin:0; width:16px; height:16px; cursor:pointer;">
-                                <button type="button" class="sc-access-btn" title="Исключения" style="display:flex; justify-content:center; align-items:center; width:24px; height:24px; margin:0; padding:0; background:{{#if allowedUsers}}rgba(76,175,80,0.2){{else}}rgba(0,0,0,0.3){{/if}}; border:1px solid {{#if allowedUsers}}#4caf50{{else}}rgba(255,215,0,0.3){{/if}}; color:{{#if allowedUsers}}#4caf50{{else}}#ffd700{{/if}}; border-radius:4px; cursor:pointer; transition:all 0.2s;">
-                                    <i class="fas fa-users" style="font-size:11px; margin-left:1px;"></i>
+                            <div class="sc-access-group">
+                                <input type="checkbox" name="damageTypes.{{key}}.hidden" {{#if hidden}}checked{{/if}} class="sc-hide-check">
+                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения">
+                                    <i class="fas fa-users"></i>
                                 </button>
                                 <input type="hidden" name="damageTypes.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
                             </div>
@@ -236,15 +237,14 @@
         <section class="tab" data-tab="languages" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Языки</div>
+                <div class="sc-tab-hint">Добавляй новые языки для своего сеттинга.</div>
             </div>
             <table id="sc-table-languages" class="sc-table">
                 <thead>
                 <tr>
                     <th style="width:100px">Ключ</th>
                     <th>Название</th>
-                    <th style="width:90px; text-align:center;" title="Скрыть / Исключения">
-                        <i class="fas fa-eye-slash" style="color:#a89a80;"></i> <span style="opacity:0.3; margin:0 3px;">|</span> <i class="fas fa-users" style="color:#a89a80; margin-left:1px;"></i>
-                    </th>
+                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
                     <th style="width:36px"></th>
                 </tr>
                 </thead>
@@ -254,10 +254,10 @@
                         <td><code class="sc-key">{{key}}</code></td>
                         <td><input type="text" name="languages.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
                         <td class="sc-td-center">
-                            <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
-                                <input type="checkbox" name="languages.{{key}}.hidden" {{#if hidden}}checked{{/if}} style="margin:0; width:16px; height:16px; cursor:pointer;">
-                                <button type="button" class="sc-access-btn" title="Исключения" style="display:flex; justify-content:center; align-items:center; width:24px; height:24px; margin:0; padding:0; background:{{#if allowedUsers}}rgba(76,175,80,0.2){{else}}rgba(0,0,0,0.3){{/if}}; border:1px solid {{#if allowedUsers}}#4caf50{{else}}rgba(255,215,0,0.3){{/if}}; color:{{#if allowedUsers}}#4caf50{{else}}#ffd700{{/if}}; border-radius:4px; cursor:pointer; transition:all 0.2s;">
-                                    <i class="fas fa-users" style="font-size:11px; margin-left:1px;"></i>
+                            <div class="sc-access-group">
+                                <input type="checkbox" name="languages.{{key}}.hidden" {{#if hidden}}checked{{/if}} class="sc-hide-check">
+                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения">
+                                    <i class="fas fa-users"></i>
                                 </button>
                                 <input type="hidden" name="languages.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
                             </div>
@@ -276,6 +276,7 @@
         <section class="tab" data-tab="currencies" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Валюты</div>
+                <div class="sc-tab-hint">Переименовывай монеты — например «Золотая монета (зм)» вместо «Gold Piece (gp)».</div>
             </div>
             <table id="sc-table-currencies" class="sc-table">
                 <thead>
@@ -301,6 +302,7 @@
         <section class="tab" data-tab="numbers" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Числовые параметры системы</div>
+                <div class="sc-tab-hint">Базовые числа механики. Меняй только если точно понимаешь что делаешь.</div>
             </div>
             <div class="sc-numerics-grid">
                 {{#each numerics}}

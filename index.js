@@ -772,12 +772,12 @@ Hooks.once("ready", () => {
         }
     }
 
-    const hideCategories = ["weaponTypes", "armorTypes", "alignments", "damageTypes", "conditionTypes", "languages"];
+    const hideCategories = ["weaponTypes", "alignments", "damageTypes", "languages"];
     for (const cat of hideCategories) {
         if (systemConfig[cat]) {
             for (const [key, val] of Object.entries(systemConfig[cat])) {
                 if (val.hidden && !(val.allowedUsers || []).includes(userId)) {
-                    css += `option[value="${key}"],[data-key="${key}"] { display: none !important; }\n`;
+                    css += `dnd5e-actor [data-damage="${key}"] { display: none !important; }\n`;
                 }
             }
         }
