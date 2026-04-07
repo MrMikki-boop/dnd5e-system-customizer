@@ -71,5 +71,5 @@
     "minimum": "13",
     "verified": "13"
   },
-  "manifest": "https://r2.foundryvtt.com/packages-public/dnd5e-system-customizer/module.json"
+  "manifest": "https://github.com/MrMikki-boop/dnd5e-system-customizer/releases/download/latest/module.json"
 }
