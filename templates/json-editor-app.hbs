@@ -240,10 +240,10 @@
             {{#if usesLanguageGroups}}
                 <div id="sc-language-sections" class="sc-language-sections">
                     {{#each languageSections}}
-                        <div class="sc-language-section" data-group="{{key}}">
+                        <div class="sc-language-section" data-group="{{key}}" {{#if isVirtual}}data-virtual="true"{{/if}}>
                             <div class="sc-language-section-title">
                                 <code class="sc-key">{{key}}</code>
-                                <input type="text" class="sc-language-group-label" name="languageGroups.{{key}}.label" value="{{label}}" placeholder="{{originalLabel}}">
+                                <input type="text" class="sc-language-group-label" name="languageGroups.{{key}}.label" value="{{label}}" placeholder="{{originalLabel}}" {{#if isVirtual}}readonly{{/if}}>
                                 {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
                             </div>
                             <table id="sc-table-languages-{{key}}" class="sc-table sc-table-languages">
@@ -257,7 +257,7 @@
                                 </thead>
                                 <tbody>
                                 {{#each languages}}
-                                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                                    <tr data-key="{{key}}" data-source-group="{{sourceGroup}}" data-path="{{path}}" {{#if isCustom}}data-custom="true"{{/if}}>
                                         <td><code class="sc-key">{{key}}</code></td>
                                         <td><input type="text" class="sc-language-label" name="languages.{{group}}.children.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
                                         <td class="sc-td-center">
@@ -276,7 +276,7 @@
                                 {{/each}}
                                 </tbody>
                             </table>
-                            <button type="button" class="sc-add-btn sc-add-language" data-group="{{key}}"><i class="fas fa-plus"></i> Добавить язык</button>
+                            {{#unless isVirtual}}<button type="button" class="sc-add-btn sc-add-language" data-group="{{key}}"><i class="fas fa-plus"></i> Добавить язык</button>{{/unless}}
                         </div>
                     {{/each}}
                 </div>

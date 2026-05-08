@@ -33,6 +33,12 @@ const SKILL_HINTS = {
 
 const DEFAULT_DAMAGE_ICON  = "systems/dnd5e/icons/svg/damage/bludgeoning.svg";
 const DEFAULT_DAMAGE_COLOR = "#888888";
+const SPECIAL_LANGUAGE_KEYS = new Set(["sign", "cant", "druidic"]);
+const SPECIAL_LANGUAGE_SECTION = {
+    key: "__special",
+    label: "Прочие",
+    originalLabel: "Прочие",
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Вспомогательные функции
@@ -302,6 +308,30 @@ class JsonEditorApp extends FormApplication {
         return loc(value) || fallback;
     }
 
+    _flattenLanguageChildren(children = {}, overrides = {}, groupKey, path = []) {
+        const languages = [];
+        for (const [key, value] of Object.entries(children)) {
+            const childPath = [...path, key];
+            if (value?.children) {
+                languages.push(...this._flattenLanguageChildren(value.children, overrides, groupKey, childPath));
+                continue;
+            }
+            const ov = foundry.utils.getProperty(overrides, childPath.join(".children.")) ?? {};
+            languages.push({
+                group: groupKey,
+                sourceGroup: groupKey,
+                key,
+                path: childPath.join("."),
+                label: ov.label ?? this._entryLabel(value, key),
+                hidden: ov.hidden ?? false,
+                allowedUsers: (ov.allowedUsers || []).join(","),
+                isCustom: false,
+                isSpecial: SPECIAL_LANGUAGE_KEYS.has(key),
+            });
+        }
+        return languages;
+    }
+
     _buildLanguageSections(cfg, custom) {
         const src = cfg.languages ?? {};
         const overrides = custom.languages ?? {};
@@ -312,20 +342,8 @@ class JsonEditorApp extends FormApplication {
             seen.add(groupKey);
             const children = groupValue.children ?? {};
             const childOverrides = overrideValue.children ?? {};
-            const languages = [];
-
-            for (const [key, value] of Object.entries(children)) {
-                if (value?.children) continue;
-                const ov = childOverrides[key] ?? {};
-                languages.push({
-                    group: groupKey,
-                    key,
-                    label: ov.label ?? this._entryLabel(value, key),
-                    hidden: ov.hidden ?? false,
-                    allowedUsers: (ov.allowedUsers || []).join(","),
-                    isCustom: false,
-                });
-            }
+            const languages = this._flattenLanguageChildren(children, childOverrides, groupKey)
+                .filter(language => !language.isSpecial);
 
             for (const [key, value] of Object.entries(childOverrides)) {
                 if (children[key]) continue;
@@ -333,7 +351,9 @@ class JsonEditorApp extends FormApplication {
                 if (value.children) continue;
                 languages.push({
                     group: groupKey,
+                    sourceGroup: groupKey,
                     key,
+                    path: key,
                     label: value.label ?? key,
                     hidden: value.hidden ?? false,
                     allowedUsers: (value.allowedUsers || []).join(","),
@@ -352,6 +372,22 @@ class JsonEditorApp extends FormApplication {
 
         for (const [groupKey, groupValue] of Object.entries(src)) {
             if (groupValue?.children) addSection(groupKey, groupValue, overrides[groupKey] ?? {});
+        }
+
+        const specialLanguages = [];
+        for (const [groupKey, groupValue] of Object.entries(src)) {
+            const overrideValue = overrides[groupKey] ?? {};
+            specialLanguages.push(...this._flattenLanguageChildren(groupValue.children ?? {}, overrideValue.children ?? {}, groupKey)
+                .filter(language => language.isSpecial)
+                .map(language => ({ ...language, group: SPECIAL_LANGUAGE_SECTION.key })));
+        }
+        if (specialLanguages.length) {
+            sections.push({
+                ...SPECIAL_LANGUAGE_SECTION,
+                isCustom: false,
+                isVirtual: true,
+                languages: specialLanguages,
+            });
         }
 
         for (const [groupKey, groupValue] of Object.entries(overrides)) {
@@ -797,51 +833,85 @@ class JsonEditorApp extends FormApplication {
     _mergeLanguageGroupOverrides(html, cfg, existing, getArray) {
         const src = cfg.languages ?? {};
         const target = {};
+        const ensureGroup = (groupKey) => {
+            target[groupKey] ??= {};
+            return target[groupKey];
+        };
+        const ensureChildren = (groupTarget) => {
+            groupTarget.children ??= {};
+            return groupTarget.children;
+        };
+        const setChild = (children, path, value) => {
+            const parts = path.split(".").filter(Boolean);
+            let node = children;
+            while (parts.length > 1) {
+                const part = parts.shift();
+                node[part] ??= { children: {} };
+                node[part].children ??= {};
+                node = node[part].children;
+            }
+            node[parts[0]] = value;
+        };
+
         html.querySelectorAll(".sc-language-section[data-group]").forEach(section => {
             const groupKey = section.dataset.group;
+            const isVirtual = section.dataset.virtual === "true";
             const srcGroup = src[groupKey] ?? {};
             const existingGroup = existing.languages?.[groupKey] ?? {};
             const groupLabel = section.querySelector(".sc-language-group-label")?.value?.trim();
             const originalGroupLabel = this._entryLabel(srcGroup, groupKey);
-            const groupTarget = {};
 
-            if (groupLabel && (groupLabel !== originalGroupLabel || !src[groupKey])) groupTarget.label = groupLabel;
-            if (!src[groupKey]) {
-                groupTarget.selectable = false;
-                groupTarget._customGroup = true;
+            if (!isVirtual) {
+                const groupTarget = ensureGroup(groupKey);
+                if (groupLabel && (groupLabel !== originalGroupLabel || !src[groupKey])) groupTarget.label = groupLabel;
+                if (!src[groupKey]) {
+                    groupTarget.selectable = false;
+                    groupTarget._customGroup = true;
+                }
             }
 
-            const children = {};
             const domKeys = new Set();
             section.querySelectorAll("tr[data-key]").forEach(row => {
                 const key = row.dataset.key;
-                domKeys.add(key);
-                const srcValue = srcGroup.children?.[key];
-                const existingValue = existingGroup.children?.[key] ?? {};
+                const sourceGroupKey = row.dataset.sourceGroup || groupKey;
+                const childPath = row.dataset.path || key;
+                const sourceSrcGroup = src[sourceGroupKey] ?? {};
+                const sourceExistingGroup = existing.languages?.[sourceGroupKey] ?? {};
+                const sourceTarget = ensureGroup(sourceGroupKey);
+                const children = ensureChildren(sourceTarget);
+                domKeys.add(`${sourceGroupKey}:${childPath}`);
+                const srcValue = foundry.utils.getProperty(sourceSrcGroup.children ?? {}, childPath.split(".").join(".children."));
+                const existingValue = foundry.utils.getProperty(sourceExistingGroup.children ?? {}, childPath.split(".").join(".children.")) ?? {};
                 const newLabel = row.querySelector(".sc-language-label")?.value?.trim();
                 const hidden = row.querySelector(".sc-hide-check")?.checked ?? false;
                 const allowedUsers = getArray(row.querySelector(".sc-allowed-users")?.value);
 
                 if (!srcValue) {
-                    children[key] = { ...(existingValue ?? {}), label: newLabel || existingValue?.label || key, hidden, allowedUsers, _custom: true };
+                    setChild(children, childPath, { ...(existingValue ?? {}), label: newLabel || existingValue?.label || key, hidden, allowedUsers, _custom: true });
                     return;
                 }
 
                 const originalLabel = this._entryLabel(srcValue, key);
                 const changed = (newLabel && newLabel !== originalLabel) || hidden || allowedUsers.length > 0;
-                if (changed) children[key] = { ...(existingValue ?? {}), label: newLabel || originalLabel, hidden, allowedUsers };
+                if (changed) setChild(children, childPath, { ...(existingValue ?? {}), label: newLabel || originalLabel, hidden, allowedUsers });
             });
 
+            if (isVirtual) return;
+
+            const groupTarget = ensureGroup(groupKey);
+            const children = ensureChildren(groupTarget);
             for (const [key, value] of Object.entries(existingGroup.children ?? {})) {
-                if (value?._custom && !domKeys.has(key)) continue;
+                const domKey = `${groupKey}:${key}`;
+                if (value?._custom && !domKeys.has(domKey)) continue;
                 if (children[key]) continue;
                 if (value?._custom) children[key] = value;
                 else if (!srcGroup.children?.[key] && value) children[key] = value;
             }
-
-            if (Object.keys(children).length) groupTarget.children = children;
-            if (Object.keys(groupTarget).length) target[groupKey] = groupTarget;
         });
+        for (const [groupKey, groupValue] of Object.entries([...Object.entries(target)].reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {}))) {
+            if (groupValue.children && !Object.keys(groupValue.children).length) delete groupValue.children;
+            if (!Object.keys(groupValue).length) delete target[groupKey];
+        }
         return target;
     }
 
