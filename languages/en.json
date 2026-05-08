@@ -24,6 +24,13 @@
         "CustomizerApp": {
             "title": "D&D 5e System Customizer",
             "save": "Save Changes",
+            "reloadConfirm": {
+                "title": "Save changes?",
+                "content": "The page will reload after saving so system changes can take effect.",
+                "yes": "Save and Reload",
+                "no": "Cancel",
+                "saved": "System customization saved. The page will reload."
+            },
             "hide": "Hide",
             "delete": "Delete",
             "tabs": {

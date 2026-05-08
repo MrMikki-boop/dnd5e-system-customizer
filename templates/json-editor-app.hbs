@@ -36,7 +36,6 @@
                         <td><code class="sc-key">{{key}}</code></td>
                         <td>
                             <input type="text" name="abilities.{{key}}.label" value="{{label}}" placeholder="{{label}}">
-                            {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
                         </td>
                         <td><input type="text" name="abilities.{{key}}.abbr" value="{{abbr}}" style="width:56px"></td>
                         <td class="sc-td-center">
@@ -69,8 +68,8 @@
                 <tr>
                     <th style="width:70px">Ключ</th>
                     <th>Название навыка</th>
-                    <th style="width:110px">Характеристика</th>
-                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
+                    <th class="sc-col-skill-ability">Характеристика</th>
+                    <th class="sc-col-access sc-td-center"><span class="sc-access-heading"><i class="fas fa-eye-slash"></i><i class="fas fa-users"></i></span></th>
                     <th style="width:36px"></th>
                 </tr>
                 </thead>
@@ -80,7 +79,6 @@
                         <td><code class="sc-key">{{key}}</code></td>
                         <td>
                             <input type="text" name="skills.{{key}}.label" value="{{label}}" placeholder="{{label}}">
-                            {{#if hint}}<i class="fas fa-circle-question sc-hint" data-hint="{{hint}}"></i>{{/if}}
                         </td>
                         <td>
                             <select name="skills.{{key}}.ability" style="width:100px">
@@ -195,11 +193,11 @@
             <table id="sc-table-damage" class="sc-table">
                 <thead>
                 <tr>
-                    <th style="width:100px">Ключ</th>
-                    <th style="width:160px">Название</th>
-                    <th style="width:70px" class="sc-td-center">Иконка</th>
-                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
-                    <th style="width:36px"></th>
+                    <th class="sc-col-key">Ключ</th>
+                    <th class="sc-col-name">Название</th>
+                    <th class="sc-col-icon sc-td-center">Иконка</th>
+                    <th class="sc-col-access sc-td-center"><span class="sc-access-heading"><i class="fas fa-eye-slash"></i><i class="fas fa-users"></i></span></th>
+                    <th class="sc-col-delete"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -239,37 +237,83 @@
                 <div class="sc-tab-title">Языки</div>
                 <div class="sc-tab-hint">Добавляй новые языки для своего сеттинга.</div>
             </div>
-            <table id="sc-table-languages" class="sc-table">
-                <thead>
-                <tr>
-                    <th style="width:100px">Ключ</th>
-                    <th>Название</th>
-                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
-                    <th style="width:36px"></th>
-                </tr>
-                </thead>
-                <tbody>
-                {{#each languages}}
-                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
-                        <td><code class="sc-key">{{key}}</code></td>
-                        <td><input type="text" name="languages.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
-                        <td class="sc-td-center">
-                            <div class="sc-access-group">
-                                <input type="checkbox" name="languages.{{key}}.hidden" {{#if hidden}}checked{{/if}} class="sc-hide-check">
-                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения">
-                                    <i class="fas fa-users"></i>
-                                </button>
-                                <input type="hidden" name="languages.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
+            {{#if usesLanguageGroups}}
+                <div id="sc-language-sections" class="sc-language-sections">
+                    {{#each languageSections}}
+                        <div class="sc-language-section" data-group="{{key}}">
+                            <div class="sc-language-section-title">
+                                <code class="sc-key">{{key}}</code>
+                                <input type="text" class="sc-language-group-label" name="languageGroups.{{key}}.label" value="{{label}}" placeholder="{{originalLabel}}">
+                                {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
                             </div>
-                        </td>
-                        <td class="sc-td-center">
-                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
-                        </td>
+                            <table id="sc-table-languages-{{key}}" class="sc-table sc-table-languages">
+                                <thead>
+                                <tr>
+                                    <th style="width:100px">Ключ</th>
+                                    <th>Название</th>
+                                    <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
+                                    <th style="width:36px"></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{#each languages}}
+                                    <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                                        <td><code class="sc-key">{{key}}</code></td>
+                                        <td><input type="text" class="sc-language-label" name="languages.{{group}}.children.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                                        <td class="sc-td-center">
+                                            <div class="sc-access-group">
+                                                <input type="checkbox" name="languages.{{group}}.children.{{key}}.hidden" {{#if hidden}}checked{{/if}} class="sc-hide-check">
+                                                <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения">
+                                                    <i class="fas fa-users"></i>
+                                                </button>
+                                                <input type="hidden" name="languages.{{group}}.children.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
+                                            </div>
+                                        </td>
+                                        <td class="sc-td-center">
+                                            {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                                        </td>
+                                    </tr>
+                                {{/each}}
+                                </tbody>
+                            </table>
+                            <button type="button" class="sc-add-btn sc-add-language" data-group="{{key}}"><i class="fas fa-plus"></i> Добавить язык</button>
+                        </div>
+                    {{/each}}
+                </div>
+                <button type="button" id="sc-add-language-group" class="sc-add-btn"><i class="fas fa-layer-group"></i> Добавить плашку</button>
+            {{else}}
+                <table id="sc-table-languages" class="sc-table">
+                    <thead>
+                    <tr>
+                        <th style="width:100px">Ключ</th>
+                        <th>Название</th>
+                        <th style="width:80px" class="sc-td-center"><i class="fas fa-eye-slash"></i> <span class="sc-th-sep">|</span> <i class="fas fa-users"></i></th>
+                        <th style="width:36px"></th>
                     </tr>
-                {{/each}}
-                </tbody>
-            </table>
-            <button type="button" id="sc-add-language" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить язык</button>
+                    </thead>
+                    <tbody>
+                    {{#each languages}}
+                        <tr data-key="{{key}}" {{#if isCustom}}data-custom="true"{{/if}}>
+                            <td><code class="sc-key">{{key}}</code></td>
+                            <td><input type="text" name="languages.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
+                            <td class="sc-td-center">
+                                <div class="sc-access-group">
+                                    <input type="checkbox" name="languages.{{key}}.hidden" {{#if hidden}}checked{{/if}} class="sc-hide-check">
+                                    <button type="button" class="sc-access-btn {{#if allowedUsers}}sc-access-btn--active{{/if}}" title="Исключения">
+                                        <i class="fas fa-users"></i>
+                                    </button>
+                                    <input type="hidden" name="languages.{{key}}.allowedUsers" class="sc-allowed-users" value="{{allowedUsers}}">
+                                </div>
+                            </td>
+                            <td class="sc-td-center">
+                                {{#if isCustom}}<button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>{{/if}}
+                            </td>
+                        </tr>
+                    {{/each}}
+                    </tbody>
+                </table>
+                <button type="button" id="sc-add-language" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить язык</button>
+            {{/if}}
         </section>
 
         {{!-- ═══════════ ВАЛЮТА ═══════════ --}}

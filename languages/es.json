@@ -4,6 +4,13 @@
             "delete": "Borrar",
             "hide": "Esconder",
             "save": "Guardar cambios",
+            "reloadConfirm": {
+                "title": "Save changes?",
+                "content": "The page will reload after saving so system changes can take effect.",
+                "yes": "Save and Reload",
+                "no": "Cancel",
+                "saved": "System customization saved. The page will reload."
+            },
             "tabs": {
                 "abilities": {
                     "abilityAbbreviation": "Abreviatura",

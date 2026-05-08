@@ -146,6 +146,42 @@
   background: rgba(76, 175, 80, 0.08);
 }
 
+.sc-language-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.sc-language-section {
+  border-bottom: 1px solid rgba(255, 215, 0, 0.12);
+  padding-bottom: 8px;
+}
+
+.sc-language-section-title {
+  display: grid;
+  grid-template-columns: 120px minmax(180px, 1fr) 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 6px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.sc-language-section-title input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 4px;
+  color: #f0e6d2;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-family: 'Signika', sans-serif;
+}
+
+.sc-language-section-title input:focus {
+  outline: none;
+  border-color: rgba(255, 215, 0, 0.6);
+}
+
 /* ── Ключ-бейдж ── */
 code.sc-key {
   font-family: 'Courier New', monospace;
@@ -196,10 +232,11 @@ code.sc-key {
 }
 
 .sc-table input[type="checkbox"] {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   accent-color: #ffd700;
   cursor: pointer;
+  margin: 0;
 }
 
 .sc-td-center {
@@ -379,7 +416,9 @@ code.sc-key {
 .sc-icon-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
+  min-width: 66px;
 }
 
 .sc-icon-row .sc-icon-preview {
@@ -392,7 +431,12 @@ code.sc-key {
 }
 
 .sc-icon-row .sc-pick-icon {
-  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  padding: 0;
   background: rgba(255,215,0,0.08);
   border: 1px solid rgba(255,215,0,0.2);
   border-radius: 4px;
@@ -408,9 +452,49 @@ code.sc-key {
 }
 
 .sc-table td.sc-icon-cell {
-  width: 70px;
-  padding: 3px 6px;
+  width: 96px;
+  padding: 3px 8px;
   vertical-align: middle;
+}
+
+#sc-table-damage {
+  table-layout: fixed;
+}
+
+#sc-table-skills {
+  table-layout: fixed;
+}
+
+#sc-table-damage .sc-col-key { width: 190px; }
+#sc-table-damage .sc-col-name { width: auto; }
+#sc-table-damage .sc-col-icon { width: 88px; }
+#sc-table-damage .sc-col-access { width: 88px; }
+#sc-table-damage .sc-col-delete { width: 42px; }
+
+#sc-table-skills .sc-col-skill-ability { width: 130px; }
+#sc-table-skills .sc-col-access { width: 88px; }
+
+#sc-table-damage th,
+#sc-table-damage td {
+  height: 34px;
+}
+
+#sc-table-damage .sc-icon-cell,
+#sc-table-damage .sc-access-group,
+#sc-table-damage .sc-td-center {
+  vertical-align: middle;
+}
+
+.sc-access-heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 56px;
+}
+
+.sc-access-heading {
+  color: #8a7a65;
 }
 
 .sc-table input[name*="[].key"]::placeholder {
@@ -443,12 +527,14 @@ code.sc-key {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  width: 56px;
+  margin: 0 auto;
 }
 
 .sc-hide-check {
-  width: 15px !important;
-  height: 15px !important;
+  width: 16px !important;
+  height: 16px !important;
   margin: 0 !important;
   accent-color: #ffd700;
   cursor: pointer;
