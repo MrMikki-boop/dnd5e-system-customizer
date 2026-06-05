@@ -1,3 +1,6 @@
+import { buildLanguageSections, getDirectChildrenKeys, mergeLanguageGroupOverrides, usesLanguageGroups } from "./scripts/languages.js";
+import { confirmReloadAfterSave, reloadCurrentClient, waitForReload } from "./scripts/reload-flow.js";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Русские подписи для всех категорий CONFIG.DND5E
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,12 +36,6 @@ const SKILL_HINTS = {
 
 const DEFAULT_DAMAGE_ICON  = "systems/dnd5e/icons/svg/damage/bludgeoning.svg";
 const DEFAULT_DAMAGE_COLOR = "#888888";
-const SPECIAL_LANGUAGE_KEYS = new Set(["sign", "cant", "druidic"]);
-const SPECIAL_LANGUAGE_SECTION = {
-    key: "__special",
-    label: "Прочие",
-    originalLabel: "Прочие",
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Вспомогательные функции
@@ -73,15 +70,6 @@ function getDomKeys(html, tableSelector) {
     return keys;
 }
 
-function getDirectChildrenKeys(root = {}) {
-    const keys = [];
-    for (const [key, value] of Object.entries(root)) {
-        if (value?.children) keys.push(...getDirectChildrenKeys(value.children));
-        else keys.push(key);
-    }
-    return keys;
-}
-
 function buildDamageTypeEntry(label, icon, color) {
     return {
         label:      label || "Custom",
@@ -109,41 +97,6 @@ function openFilePicker(currentPath, onSelect) {
         current: currentPath || "systems/dnd5e/icons/svg/damage/",
         callback: (path) => onSelect(path),
     }).render(true);
-}
-
-function reloadCurrentClient() {
-    if (foundry.utils.debouncedReload instanceof Function) foundry.utils.debouncedReload();
-    else window.location.reload();
-}
-
-function waitForReload() {
-    return new Promise(resolve => window.setTimeout(resolve, 500));
-}
-
-async function confirmReloadAfterSave() {
-    const title = loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.title`) || "Save Changes?";
-    const content = `<p>${loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.content`) || "The page will reload after saving so system changes can take effect."}</p>`;
-    const yesLabel = loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.yes`) || "Save and Reload";
-    const noLabel = loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.no`) || "Cancel";
-    const DialogV2 = foundry.applications?.api?.DialogV2;
-
-    if (DialogV2?.confirm instanceof Function) {
-        return DialogV2.confirm({
-            window: { title },
-            content,
-            modal: true,
-            yes: { icon: "fa-solid fa-check", label: yesLabel, default: true },
-            no: { icon: "fa-solid fa-xmark", label: noLabel },
-        });
-    }
-
-    return Dialog.confirm({
-        title,
-        content,
-        yes: () => true,
-        no: () => false,
-        defaultYes: true,
-    });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,9 +140,9 @@ class JsonEditorApp extends FormApplication {
         const alignments  = this._buildSimpleList(cfg, custom, "alignments", null);
         const damageTypes = this._buildDamageList(cfg, custom);
         const conditions  = this._buildSimpleList(cfg, custom, "conditionTypes", null, true);
-        const usesLanguageGroups = this._usesLanguageGroups(cfg, custom);
-        const languages   = usesLanguageGroups ? [] : this._buildSimpleList(cfg, custom, "languages", null, true);
-        const languageSections = usesLanguageGroups ? this._buildLanguageSections(cfg, custom) : [];
+        const groupedLanguages = usesLanguageGroups(cfg, custom);
+        const languages   = groupedLanguages ? [] : this._buildSimpleList(cfg, custom, "languages", null, true);
+        const languageSections = groupedLanguages ? buildLanguageSections(cfg, custom, loc) : [];
         const currencies  = this._buildCurrencyList(cfg, custom);
 
         const numerics =[
@@ -202,7 +155,7 @@ class JsonEditorApp extends FormApplication {
 
         return {
             abilities, skills, weapons, armor,
-            alignments, damageTypes, conditions, languages, languageSections, usesLanguageGroups,
+            alignments, damageTypes, conditions, languages, languageSections, usesLanguageGroups: groupedLanguages,
             currencies, numerics,
             allAbilityKeys: getAllAbilityKeys(),
             hasCustomAbilities: abilities.some(a => a.isCustom),
@@ -296,126 +249,6 @@ class JsonEditorApp extends FormApplication {
             result.push({ key, label: rawLabel ?? key, isCustom: true, hidden: val.hidden ?? false, allowedUsers: (val.allowedUsers ||[]).join(",") });
         }
         return result;
-    }
-
-    _usesLanguageGroups(cfg, custom) {
-        return Object.values(cfg.languages ?? {}).some(v => v?.children)
-            || Object.values(custom.languages ?? {}).some(v => v?.children);
-    }
-
-    _entryLabel(value, fallback) {
-        if (value && typeof value === "object") return loc(value.label ?? fallback) || fallback;
-        return loc(value) || fallback;
-    }
-
-    _flattenLanguageChildren(children = {}, overrides = {}, groupKey, path = []) {
-        const languages = [];
-        for (const [key, value] of Object.entries(children)) {
-            const childPath = [...path, key];
-            if (value?.children) {
-                languages.push(...this._flattenLanguageChildren(value.children, overrides, groupKey, childPath));
-                continue;
-            }
-            const ov = foundry.utils.getProperty(overrides, childPath.join(".children.")) ?? {};
-            languages.push({
-                group: groupKey,
-                sourceGroup: groupKey,
-                key,
-                path: childPath.join("."),
-                label: ov.label ?? this._entryLabel(value, key),
-                hidden: ov.hidden ?? false,
-                allowedUsers: (ov.allowedUsers || []).join(","),
-                isCustom: false,
-                isSpecial: SPECIAL_LANGUAGE_KEYS.has(key),
-            });
-        }
-        return languages;
-    }
-
-    _buildLanguageSections(cfg, custom) {
-        const src = cfg.languages ?? {};
-        const overrides = custom.languages ?? {};
-        const sections = [];
-        const seen = new Set();
-
-        const addSection = (groupKey, groupValue = {}, overrideValue = {}) => {
-            seen.add(groupKey);
-            const children = groupValue.children ?? {};
-            const childOverrides = overrideValue.children ?? {};
-            const languages = this._flattenLanguageChildren(children, childOverrides, groupKey)
-                .filter(language => !language.isSpecial);
-
-            for (const [key, value] of Object.entries(childOverrides)) {
-                if (children[key]) continue;
-                if (!value || typeof value !== "object") continue;
-                if (value.children) continue;
-                languages.push({
-                    group: groupKey,
-                    sourceGroup: groupKey,
-                    key,
-                    path: key,
-                    label: value.label ?? key,
-                    hidden: value.hidden ?? false,
-                    allowedUsers: (value.allowedUsers || []).join(","),
-                    isCustom: true,
-                });
-            }
-
-            sections.push({
-                key: groupKey,
-                label: overrideValue.label ?? this._entryLabel(groupValue, groupKey),
-                originalLabel: this._entryLabel(groupValue, groupKey),
-                isCustom: !src[groupKey] || !!overrideValue._customGroup,
-                languages,
-            });
-        };
-
-        for (const [groupKey, groupValue] of Object.entries(src)) {
-            if (groupValue?.children) addSection(groupKey, groupValue, overrides[groupKey] ?? {});
-        }
-
-        const specialLanguages = [];
-        for (const [groupKey, groupValue] of Object.entries(src)) {
-            const overrideValue = overrides[groupKey] ?? {};
-            specialLanguages.push(...this._flattenLanguageChildren(groupValue.children ?? {}, overrideValue.children ?? {}, groupKey)
-                .filter(language => language.isSpecial)
-                .map(language => ({ ...language, group: SPECIAL_LANGUAGE_SECTION.key })));
-        }
-        if (specialLanguages.length) {
-            sections.push({
-                ...SPECIAL_LANGUAGE_SECTION,
-                isCustom: false,
-                isVirtual: true,
-                languages: specialLanguages,
-            });
-        }
-
-        for (const [groupKey, groupValue] of Object.entries(overrides)) {
-            if (seen.has(groupKey)) continue;
-            if (groupValue?.children) addSection(groupKey, {}, groupValue);
-        }
-
-        const legacyCustom = Object.entries(overrides).filter(([, value]) => value?._custom && !value.children);
-        if (legacyCustom.length) {
-            let custom = sections.find(s => s.key === "custom");
-            if (!custom) {
-                custom = { key: "custom", label: "Author Languages", originalLabel: "Author Languages", isCustom: true, languages: [] };
-                sections.push(custom);
-            }
-            for (const [key, value] of legacyCustom) {
-                if (custom.languages.some(l => l.key === key)) continue;
-                custom.languages.push({
-                    group: custom.key,
-                    key,
-                    label: value.label ?? key,
-                    hidden: value.hidden ?? false,
-                    allowedUsers: (value.allowedUsers || []).join(","),
-                    isCustom: true,
-                });
-            }
-        }
-
-        return sections;
     }
 
     _buildCurrencyList(cfg, custom) {
@@ -719,11 +552,11 @@ class JsonEditorApp extends FormApplication {
         const domDamageKeys = getDomKeys(html, "#sc-table-damage");
         for (const key of Object.keys(damageTypes)) if (damageTypes[key]?._custom && !domDamageKeys.has(key)) delete damageTypes[key];
 
-        const usesLanguageGroups = this._usesLanguageGroups(cfg, existing);
-        const languages = usesLanguageGroups
-            ? this._mergeLanguageGroupOverrides(html, cfg, existing, getArray)
+        const groupedLanguages = usesLanguageGroups(cfg, existing);
+        const languages = groupedLanguages
+            ? mergeLanguageGroupOverrides(html, cfg, existing, getArray, loc)
             : foundry.utils.deepClone(existing.languages ?? {});
-        if (!usesLanguageGroups) {
+        if (!groupedLanguages) {
             this._mergeSimpleOverrides(html, cfg, "languages", "#sc-table-languages", languages, true);
             const domLanguageKeys = getDomKeys(html, "#sc-table-languages");
             for (const key of Object.keys(languages)) if (languages[key]?._custom && !domLanguageKeys.has(key)) delete languages[key];
@@ -775,11 +608,11 @@ class JsonEditorApp extends FormApplication {
         const allDamageExisting =[...Object.keys(cfg.damageTypes ?? {}), ...Object.keys(damageTypes)];
         validateAndShow(this._collectCustomRows(html, "customDamage[]", ["key","label","icon","hidden","allowedUsers"]), "customDamage", allDamageExisting, (d) => { damageTypes[d.key] = { label: d.label || d.key, icon: (d.icon && d.icon.trim()) ? d.icon.trim() : DEFAULT_DAMAGE_ICON, color: DEFAULT_DAMAGE_COLOR, isPhysical: false, hidden: d.hidden, allowedUsers: getArray(d.allowedUsers), _custom: true }; });
 
-        const allLangExisting = usesLanguageGroups
+        const allLangExisting = groupedLanguages
             ? [...getDirectChildrenKeys(cfg.languages ?? {}), ...getDirectChildrenKeys(languages)]
             : [...Object.keys(cfg.languages ?? {}), ...Object.keys(languages)];
         validateAndShow(this._collectCustomRows(html, "customLanguages[]", ["key","group","label","hidden","allowedUsers"]), "customLanguages", allLangExisting, (l) => {
-            if (usesLanguageGroups) {
+            if (groupedLanguages) {
                 const group = l.group || "custom";
                 languages[group] ??= { label: group, selectable: false, children: {}, _customGroup: true };
                 languages[group].children ??= {};
@@ -800,7 +633,7 @@ class JsonEditorApp extends FormApplication {
         if (Object.keys(languages).length)   result.languages   = languages;   else delete result.languages;
         if (Object.keys(currencies).length)  result.currencies  = currencies;  else delete result.currencies;
 
-        const confirmed = await confirmReloadAfterSave();
+        const confirmed = await confirmReloadAfterSave(MODULE_ID, loc);
         if (!confirmed) return;
 
         console.log(`[${MODULE_ID}] Saving customizations:`, result);
@@ -828,91 +661,6 @@ class JsonEditorApp extends FormApplication {
                 delete target[key];
             }
         });
-    }
-
-    _mergeLanguageGroupOverrides(html, cfg, existing, getArray) {
-        const src = cfg.languages ?? {};
-        const target = {};
-        const ensureGroup = (groupKey) => {
-            target[groupKey] ??= {};
-            return target[groupKey];
-        };
-        const ensureChildren = (groupTarget) => {
-            groupTarget.children ??= {};
-            return groupTarget.children;
-        };
-        const setChild = (children, path, value) => {
-            const parts = path.split(".").filter(Boolean);
-            let node = children;
-            while (parts.length > 1) {
-                const part = parts.shift();
-                node[part] ??= { children: {} };
-                node[part].children ??= {};
-                node = node[part].children;
-            }
-            node[parts[0]] = value;
-        };
-
-        html.querySelectorAll(".sc-language-section[data-group]").forEach(section => {
-            const groupKey = section.dataset.group;
-            const isVirtual = section.dataset.virtual === "true";
-            const srcGroup = src[groupKey] ?? {};
-            const existingGroup = existing.languages?.[groupKey] ?? {};
-            const groupLabel = section.querySelector(".sc-language-group-label")?.value?.trim();
-            const originalGroupLabel = this._entryLabel(srcGroup, groupKey);
-
-            if (!isVirtual) {
-                const groupTarget = ensureGroup(groupKey);
-                if (groupLabel && (groupLabel !== originalGroupLabel || !src[groupKey])) groupTarget.label = groupLabel;
-                if (!src[groupKey]) {
-                    groupTarget.selectable = false;
-                    groupTarget._customGroup = true;
-                }
-            }
-
-            const domKeys = new Set();
-            section.querySelectorAll("tr[data-key]").forEach(row => {
-                const key = row.dataset.key;
-                const sourceGroupKey = row.dataset.sourceGroup || groupKey;
-                const childPath = row.dataset.path || key;
-                const sourceSrcGroup = src[sourceGroupKey] ?? {};
-                const sourceExistingGroup = existing.languages?.[sourceGroupKey] ?? {};
-                const sourceTarget = ensureGroup(sourceGroupKey);
-                const children = ensureChildren(sourceTarget);
-                domKeys.add(`${sourceGroupKey}:${childPath}`);
-                const srcValue = foundry.utils.getProperty(sourceSrcGroup.children ?? {}, childPath.split(".").join(".children."));
-                const existingValue = foundry.utils.getProperty(sourceExistingGroup.children ?? {}, childPath.split(".").join(".children.")) ?? {};
-                const newLabel = row.querySelector(".sc-language-label")?.value?.trim();
-                const hidden = row.querySelector(".sc-hide-check")?.checked ?? false;
-                const allowedUsers = getArray(row.querySelector(".sc-allowed-users")?.value);
-
-                if (!srcValue) {
-                    setChild(children, childPath, { ...(existingValue ?? {}), label: newLabel || existingValue?.label || key, hidden, allowedUsers, _custom: true });
-                    return;
-                }
-
-                const originalLabel = this._entryLabel(srcValue, key);
-                const changed = (newLabel && newLabel !== originalLabel) || hidden || allowedUsers.length > 0;
-                if (changed) setChild(children, childPath, { ...(existingValue ?? {}), label: newLabel || originalLabel, hidden, allowedUsers });
-            });
-
-            if (isVirtual) return;
-
-            const groupTarget = ensureGroup(groupKey);
-            const children = ensureChildren(groupTarget);
-            for (const [key, value] of Object.entries(existingGroup.children ?? {})) {
-                const domKey = `${groupKey}:${key}`;
-                if (value?._custom && !domKeys.has(domKey)) continue;
-                if (children[key]) continue;
-                if (value?._custom) children[key] = value;
-                else if (!srcGroup.children?.[key] && value) children[key] = value;
-            }
-        });
-        for (const [groupKey, groupValue] of Object.entries([...Object.entries(target)].reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {}))) {
-            if (groupValue.children && !Object.keys(groupValue.children).length) delete groupValue.children;
-            if (!Object.keys(groupValue).length) delete target[groupKey];
-        }
-        return target;
     }
 
     _mergeCurrencyOverrides(html, cfg, target) {
