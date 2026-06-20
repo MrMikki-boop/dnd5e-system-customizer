@@ -9,6 +9,7 @@
         <a class="item" data-tab="damage"><i class="fas fa-fire"></i> Типы урона</a>
         <a class="item" data-tab="languages"><i class="fas fa-language"></i> Языки</a>
         <a class="item" data-tab="currencies"><i class="fas fa-coins"></i> Валюта</a>
+        <a class="item" data-tab="experience"><i class="fas fa-star"></i> Опыт</a>
         <a class="item" data-tab="numbers"><i class="fas fa-sliders-h"></i> Параметры</a>
     </nav>
 
@@ -336,6 +337,113 @@
                         <td><code class="sc-key">{{key}}</code></td>
                         <td><input type="text" name="currencies.{{key}}.label" value="{{label}}" placeholder="{{label}}"></td>
                         <td><input type="text" name="currencies.{{key}}.abbr" value="{{abbr}}" placeholder="{{abbr}}" style="width:64px"></td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
+        </section>
+
+        {{!-- ═══════════ ОПЫТ ═══════════ --}}
+        <section class="tab" data-tab="experience" data-group="sc-main">
+            <div class="sc-tab-header">
+                <div class="sc-tab-title">Опыт и уровни</div>
+                <div class="sc-tab-hint">Настраивай таблицу опыта, режим вех и прогресс после максимального уровня. Значения применяются к CONFIG.DND5E после перезагрузки страницы.</div>
+            </div>
+
+            <div class="sc-experience-status sc-experience-status--noxp" data-xp-noxp-message {{#unless experience.isNoXp}}hidden{{/unless}}>
+                <strong>Ручные вехи активны.</strong>
+                Foundry скроет опыт в листе персонажа. Уровни нужно выдавать вручную через классы; настройки XP ниже сохранятся на будущее.
+            </div>
+
+            <div class="sc-experience-status sc-experience-status--migration" data-xp-migration-message hidden>
+                При сохранении опыт персонажей будет пересчитан с сохранением прогресса внутри текущего уровня.
+                <span data-xp-migration-count></span>
+            </div>
+
+            <div class="sc-experience-layout">
+                <div class="sc-experience-panel">
+                    <div class="sc-panel-title">Отображение опыта</div>
+                    <label class="sc-field">
+                        <span>Режим Foundry</span>
+                        <select name="experience.levelingMode">
+                            {{#each experience.levelingModeOptions}}
+                                <option value="{{value}}" data-hint="{{hint}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+                            {{/each}}
+                        </select>
+                        {{#each experience.levelingModeOptions}}
+                            {{#if selected}}<em class="sc-field-help">{{hint}}</em>{{/if}}
+                        {{/each}}
+                    </label>
+
+                    <label class="sc-field" data-xp-requires-tracking>
+                        <span>Правило прогрессии</span>
+                        <select name="experience.tableMode">
+                            {{#each experience.progressionModeOptions}}
+                                <option value="{{value}}" data-hint="{{hint}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+                            {{/each}}
+                        </select>
+                        {{#each experience.progressionModeOptions}}
+                            {{#if selected}}<em class="sc-field-help">{{hint}}</em>{{/if}}
+                        {{/each}}
+                    </label>
+
+                    <label class="sc-field">
+                        <span>Максимальный уровень</span>
+                        <input type="number" name="experience.maxLevel" value="{{experience.maxLevel}}" min="1" max="100" step="1">
+                    </label>
+
+                    <label class="sc-field" data-xp-mode-field="boons" data-xp-requires-tracking>
+                        <span>Интервал эпического дара</span>
+                        <input type="number" name="experience.epicBoonInterval" value="{{experience.epicBoonInterval}}" min="1" step="1">
+                    </label>
+                </div>
+
+                <div class="sc-experience-panel" data-xp-requires-tracking>
+                    <div class="sc-panel-title">Шкала прогрессии</div>
+                    <label class="sc-field" data-xp-mode-field="multiplier">
+                        <span>Множитель стандарта</span>
+                        <input type="number" name="experience.multiplier" value="{{experience.multiplier}}" min="0.01" step="0.01">
+                    </label>
+
+                    <label class="sc-field" data-xp-mode-field="points">
+                        <span>Очков вех за уровень</span>
+                        <input type="number" name="experience.pointsPerLevel" value="{{experience.pointsPerLevel}}" min="1" step="1">
+                    </label>
+
+                    <label class="sc-field" data-xp-mode-field="percent">
+                        <span>Процентный шаг</span>
+                        <div class="sc-input-unit">
+                            <input type="number" name="experience.percentStep" value="{{experience.percentStep}}" min="1" max="100" step="1">
+                            <span>%</span>
+                        </div>
+                    </label>
+
+                    <div class="sc-experience-note">
+                        Таблица ниже применяется напрямую только в режиме своей таблицы. В режимах множителя, очков вех и процентов она будет пересобрана автоматически после сохранения.
+                        В режиме процентов Foundry всё равно хранит целое число XP: 100 пунктов = один полный уровень.
+                    </div>
+                </div>
+            </div>
+
+            <table id="sc-table-experience" class="sc-table" data-xp-requires-tracking data-xp-mode-field="table">
+                <thead>
+                <tr>
+                    <th style="width:90px">Уровень</th>
+                    <th>{{#if experience.isPercentMode}}Прогресс уровня{{else}}Нужно всего XP / очков{{/if}}</th>
+                    <th style="width:150px">Стандарт</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{#each experience.rows}}
+                    <tr class="sc-xp-row" data-level="{{level}}">
+                        <td><code class="sc-key">{{level}}</code></td>
+                        <td>
+                            <div class="sc-xp-value-wrap">
+                                <input type="number" class="sc-xp-value" value="{{displayValue}}" data-cumulative="{{value}}" min="0" step="1" {{#if readonly}}readonly{{/if}}>
+                                {{#if suffix}}<span>{{suffix}}</span>{{/if}}
+                            </div>
+                        </td>
+                        <td><span class="sc-muted">{{original}}</span></td>
                     </tr>
                 {{/each}}
                 </tbody>

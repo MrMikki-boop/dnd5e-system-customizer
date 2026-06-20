@@ -1,3 +1,20 @@
+import {
+    applyExperienceCustomization,
+    buildExperienceData,
+    buildExperienceMigration,
+    collectExperienceForm,
+    convertActorExperienceForMigration,
+    convertStandardExperienceToConfigured,
+    convertStandardAwardForAbstractExperience,
+    getCurrentLevelExperienceDisplay,
+    getPercentExperienceDisplay,
+    getStandardExperienceForConfigured,
+    getStandardExperienceForMigration,
+    isAbstractExperienceMode,
+    isPercentExperienceMode,
+    percentToExperienceValue,
+    shouldScaleStandardExperienceAward,
+} from "./scripts/experience.js";
 import { buildLanguageSections, getDirectChildrenKeys, mergeLanguageGroupOverrides, usesLanguageGroups } from "./scripts/languages.js";
 import { confirmReloadAfterSave, reloadCurrentClient, waitForReload } from "./scripts/reload-flow.js";
 
@@ -36,6 +53,7 @@ const SKILL_HINTS = {
 
 const DEFAULT_DAMAGE_ICON  = "systems/dnd5e/icons/svg/damage/bludgeoning.svg";
 const DEFAULT_DAMAGE_COLOR = "#888888";
+const EXPERIENCE_STANDARD_FLAG = "experienceStandardValue";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Вспомогательные функции
@@ -47,6 +65,15 @@ function loadCustomizations() {
 function loc(str) {
     if (!str) return "";
     try { return game.i18n.localize(str); } catch { return str; }
+}
+
+function getCurrentDnd5eLevelingMode() {
+    try {
+        if (game.settings.settings.has("dnd5e.levelingMode")) return game.settings.get("dnd5e", "levelingMode");
+    } catch {
+        // dnd5e settings may not be registered yet during early setup.
+    }
+    return "xpBoons";
 }
 
 function getAllAbilityKeys() {
@@ -91,12 +118,183 @@ function stripRuntimeMetadata(value) {
     return result;
 }
 
+function getStoredStandardExperience(actor) {
+    const value = Number(actor?.getFlag?.(MODULE_ID, EXPERIENCE_STANDARD_FLAG));
+    return Number.isFinite(value) ? value : null;
+}
+
+function setStoredStandardExperience(update, value) {
+    if (!Number.isFinite(value)) return;
+    foundry.utils.setProperty(update, `flags.${MODULE_ID}.${EXPERIENCE_STANDARD_FLAG}`, Math.round(value));
+}
+
 function openFilePicker(currentPath, onSelect) {
     new FilePicker({
         type: "imagevideo",
         current: currentPath || "systems/dnd5e/icons/svg/damage/",
         callback: (path) => onSelect(path),
     }).render(true);
+}
+
+function getRenderedElement(html) {
+    if (html instanceof HTMLElement) return html;
+    if (html?.[0] instanceof HTMLElement) return html[0];
+    if (html?.element instanceof HTMLElement) return html.element;
+    return null;
+}
+
+function ensurePercentSign(element) {
+    if (!element) return;
+    if (element.nextElementSibling?.classList?.contains("sc-xp-percent-sign")) return;
+
+    const sign = document.createElement("span");
+    sign.className = "sc-xp-percent-sign";
+    sign.textContent = "%";
+    element.after(sign);
+}
+
+function patchAbstractExperienceSheet(app, html) {
+    const custom = loadCustomizations();
+    const tableMode = custom.experience?.tableMode;
+    if (!isAbstractExperienceMode(tableMode)) return;
+
+    const actor = app?.actor;
+    if (actor?.type !== "character") return;
+
+    if (getCurrentDnd5eLevelingMode() === "noxp") return;
+
+    const root = getRenderedElement(html);
+    const label = root?.querySelector(".xp-label");
+    if (!label) return;
+
+    const isPercent = isPercentExperienceMode(custom);
+    const display = isPercent ? getPercentExperienceDisplay(actor) : getCurrentLevelExperienceDisplay(actor);
+    if (!display) return;
+
+    root.classList.add("sc-abstract-experience-sheet");
+    if (isPercent) root.classList.add("sc-percent-experience-sheet");
+
+    const valueInput = label.querySelector('input[name="system.details.xp.value"], input[data-sc-abstract-xp="true"]');
+    const valueElement = valueInput ?? label.querySelector(".value");
+    const maxElement = label.querySelector(".max");
+
+    if (valueInput) {
+        valueInput.value = String(display.value);
+        valueInput.name = "sc.abstractExperience";
+        valueInput.dataset.scAbstractXp = "true";
+        valueInput.classList.add("sc-abstract-xp-input");
+
+        if (!valueInput.dataset.scAbstractXpBound) {
+            valueInput.dataset.scAbstractXpBound = "true";
+            valueInput.addEventListener("change", async event => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const rawValue = Number(event.currentTarget.value);
+                const xpValue = isPercent
+                    ? percentToExperienceValue(actor, event.currentTarget.value)
+                    : (Number.isFinite(rawValue) ? Math.round(display.actualMin + Math.max(0, Math.round(rawValue))) : null);
+                if (xpValue === null) return;
+
+                const update = { "system.details.xp.value": xpValue };
+                const projectedActor = {
+                    type: actor.type,
+                    system: foundry.utils.mergeObject(
+                        foundry.utils.deepClone(actor.system),
+                        { details: { xp: { value: xpValue } } },
+                        { inplace: false },
+                    ),
+                };
+                const standardValue = getStandardExperienceForConfigured(projectedActor, ORIGINAL_SYSTEM_CONFIG, custom.experience);
+                if (standardValue !== null) setStoredStandardExperience(update, standardValue);
+
+                await actor.update(update, { [MODULE_ID]: { experienceScale: "custom" } });
+            });
+        }
+    } else if (valueElement) {
+        valueElement.textContent = String(display.value);
+    }
+
+    if (maxElement) maxElement.textContent = String(display.max);
+
+    if (isPercent) {
+        ensurePercentSign(valueElement);
+        ensurePercentSign(maxElement);
+    }
+
+    const bar = root.querySelector(".xp-bar");
+    if (bar) {
+        const percentage = Math.min(Math.max((display.value / display.max) * 100, 0), 100);
+        bar.setAttribute("aria-valuemin", String(display.min));
+        bar.setAttribute("aria-valuenow", String(display.value));
+        bar.setAttribute("aria-valuemax", String(display.max));
+        bar.setAttribute("aria-valuetext", isPercent ? `${display.value}%` : `${display.value}/${display.max}`);
+        bar.style.setProperty("--bar-percentage", `${percentage}%`);
+    }
+}
+
+async function migrateCharacterExperience(migration) {
+    if (!migration?.changed || !game.user.isGM) return { updated: 0, skipped: 0 };
+
+    let updated = 0;
+    let skipped = 0;
+
+    for (const actor of game.actors ?? []) {
+        if (actor.type !== "character") continue;
+
+        let nextValue = convertActorExperienceForMigration(actor, migration);
+        const storedStandardValue = getStoredStandardExperience(actor);
+        const standardValue = storedStandardValue ?? getStandardExperienceForMigration(actor, ORIGINAL_SYSTEM_CONFIG, migration);
+
+        if (migration.target.mode === "standard" && standardValue !== null) nextValue = Math.round(standardValue);
+        if (nextValue === null) {
+            skipped += 1;
+            continue;
+        }
+
+        const currentValue = Number(actor.system?.details?.xp?.value);
+        if (Number.isFinite(currentValue) && Math.round(currentValue) === nextValue) continue;
+
+        const update = { "system.details.xp.value": nextValue };
+        if (isAbstractExperienceMode(migration.target.mode) && standardValue !== null) {
+            setStoredStandardExperience(update, standardValue);
+        }
+
+        await actor.update(update, { [MODULE_ID]: { experienceScale: "custom" } });
+        updated += 1;
+    }
+
+    return { updated, skipped };
+}
+
+function scaleExternalExperienceUpdate(actor, changes, options) {
+    if (options?.[MODULE_ID]?.experienceScale === "custom") return;
+    if (actor?.type !== "character") return;
+
+    const custom = loadCustomizations();
+    if (!shouldScaleStandardExperienceAward(custom)) return;
+
+    const nextValue = foundry.utils.getProperty(changes, "system.details.xp.value");
+    if (nextValue === undefined) return;
+
+    const currentValue = Number(actor.system?.details?.xp?.value);
+    const submittedValue = Number(nextValue);
+    const rawStandardDelta = submittedValue - currentValue;
+    const storedStandardValue = getStoredStandardExperience(actor);
+    const currentStandardValue = storedStandardValue ?? getStandardExperienceForConfigured(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience);
+    const converted = currentStandardValue === null
+        ? convertStandardAwardForAbstractExperience(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience, nextValue)
+        : convertStandardExperienceToConfigured(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience, currentStandardValue + rawStandardDelta);
+    if (converted === null || converted === Number(nextValue)) return;
+
+    foundry.utils.setProperty(changes, "system.details.xp.value", converted);
+    if (currentStandardValue !== null && Number.isFinite(rawStandardDelta)) {
+        setStoredStandardExperience(changes, currentStandardValue + rawStandardDelta);
+    }
+    if (options) {
+        options[MODULE_ID] ??= {};
+        options[MODULE_ID].experienceScale = "converted";
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,10 +342,10 @@ class JsonEditorApp extends FormApplication {
         const languages   = groupedLanguages ? [] : this._buildSimpleList(cfg, custom, "languages", null, true);
         const languageSections = groupedLanguages ? buildLanguageSections(cfg, custom, loc) : [];
         const currencies  = this._buildCurrencyList(cfg, custom);
+        const experience  = buildExperienceData(cfg, custom, getCurrentDnd5eLevelingMode());
 
         const numerics =[
             { key: "maxAbilityScore", label: "Максимум характеристики", hint: "До какого значения может вырасти любая характеристика (обычно 20)", value: custom.maxAbilityScore ?? cfg.maxAbilityScore ?? 20, original: cfg.maxAbilityScore ?? 20, type: "number" },
-            { key: "maxLevel", label: "Максимальный уровень", hint: "Предел уровня персонажа (обычно 20)", value: custom.maxLevel ?? cfg.maxLevel ?? 20, original: cfg.maxLevel ?? 20, type: "number" },
             { key: "initiativeAbility", label: "Характеристика инициативы", hint: "Какая характеристика используется для броска инициативы (обычно dex)", value: custom.initiativeAbility ?? cfg.initiativeAbility ?? "dex", original: cfg.initiativeAbility ?? "dex", type: "text" },
             { key: "initiativeFormula", label: "Формула инициативы", hint: "Формула броска инициативы (обычно 1d20 — оставь пустым для стандартной)", value: custom.initiativeFormula ?? cfg.initiativeFormula ?? "", original: cfg.initiativeFormula ?? "", type: "text" },
             { key: "hitPointsAbility", label: "Характеристика хитов", hint: "Модификатор какой характеристики прибавляется к хитам (обычно con)", value: custom.hitPointsAbility ?? cfg.hitPointsAbility ?? "con", original: cfg.hitPointsAbility ?? "con", type: "text" },
@@ -156,7 +354,7 @@ class JsonEditorApp extends FormApplication {
         return {
             abilities, skills, weapons, armor,
             alignments, damageTypes, conditions, languages, languageSections, usesLanguageGroups: groupedLanguages,
-            currencies, numerics,
+            currencies, experience, numerics,
             allAbilityKeys: getAllAbilityKeys(),
             hasCustomAbilities: abilities.some(a => a.isCustom),
             hasCustomSkills: skills.some(s => s.isCustom),
@@ -366,6 +564,105 @@ class JsonEditorApp extends FormApplication {
         });
 
         html.querySelector("#sc-reset")?.addEventListener("click", this._onReset.bind(this));
+
+        this._syncExperienceUi(html);
+        html.querySelectorAll("[name^='experience.']").forEach(input => {
+            input.addEventListener("change", () => this._syncExperienceUi(html));
+            input.addEventListener("input", () => this._syncExperienceUi(html));
+        });
+    }
+
+    _syncExperienceUi(html) {
+        const root = html.querySelector('[data-tab="experience"]');
+        if (!root) return;
+
+        const levelingMode = html.querySelector("[name='experience.levelingMode']");
+        const tableMode = html.querySelector("[name='experience.tableMode']");
+        const noxp = levelingMode?.value === "noxp";
+        const mode = tableMode?.value || "standard";
+
+        root.classList.toggle("sc-experience-noxp", noxp);
+        root.querySelector("[data-xp-noxp-message]")?.toggleAttribute("hidden", !noxp);
+
+        this._syncSelectedHint(levelingMode);
+        this._syncSelectedHint(tableMode);
+
+        root.querySelectorAll("[data-xp-requires-tracking]").forEach(element => {
+            element.classList.toggle("sc-experience-disabled", noxp);
+            element.querySelectorAll("input, select, button, textarea").forEach(control => {
+                control.disabled = noxp;
+            });
+        });
+
+        root.querySelectorAll("[data-xp-mode-field]").forEach(element => {
+            const kind = element.dataset.xpModeField;
+            const active = !noxp && (
+                kind === mode
+                || (kind === "boons" && levelingMode?.value === "xpBoons")
+                || (kind === "table")
+            );
+            element.classList.toggle("sc-experience-inactive", !active);
+
+            if (kind !== "table") {
+                element.querySelectorAll("input, select, button, textarea").forEach(control => {
+                    control.disabled = !active;
+                });
+            }
+        });
+
+        root.querySelectorAll(".sc-xp-row .sc-xp-value").forEach((input, index) => {
+            input.disabled = noxp;
+            input.readOnly = noxp || mode !== "custom" || index === 0;
+        });
+
+        const table = root.querySelector("#sc-table-experience");
+        table?.classList.toggle("sc-experience-generated", mode !== "custom");
+
+        this._syncExperienceMigrationMessage(html);
+    }
+
+    _syncSelectedHint(select) {
+        if (!select) return;
+        const hint = select.closest(".sc-field")?.querySelector(".sc-field-help");
+        if (!hint) return;
+        hint.textContent = select.selectedOptions?.[0]?.dataset?.hint || "";
+    }
+
+    _syncExperienceMigrationMessage(html) {
+        const message = html.querySelector("[data-xp-migration-message]");
+        const countNode = html.querySelector("[data-xp-migration-count]");
+        if (!message) return;
+
+        const existing = loadCustomizations();
+        const sourceExperience = existing.experience ?? {
+            tableMode: "standard",
+            maxLevel: existing.maxLevel ?? ORIGINAL_SYSTEM_CONFIG.maxLevel ?? 20,
+            epicBoonInterval: ORIGINAL_SYSTEM_CONFIG.epicBoonInterval ?? 30000,
+        };
+        const nextExperience = collectExperienceForm(html, ORIGINAL_SYSTEM_CONFIG, existing, getCurrentDnd5eLevelingMode());
+        const migration = buildExperienceMigration(ORIGINAL_SYSTEM_CONFIG, sourceExperience, nextExperience);
+        const count = this._countExperienceMigrationUpdates(migration);
+
+        message.hidden = !migration.changed;
+        if (countNode) {
+            countNode.textContent = count
+                ? `Будет обновлено персонажей: ${count}.`
+                : "Персонажи не требуют изменения XP.";
+        }
+    }
+
+    _countExperienceMigrationUpdates(migration) {
+        if (!migration?.changed) return 0;
+
+        let count = 0;
+        for (const actor of game.actors ?? []) {
+            const nextValue = convertActorExperienceForMigration(actor, migration);
+            if (nextValue === null) continue;
+
+            const currentValue = Number(actor.system?.details?.xp?.value);
+            if (!Number.isFinite(currentValue) || Math.round(currentValue) !== nextValue) count += 1;
+        }
+        return count;
     }
 
     _addRow(html, type, groupKey = null) {
@@ -564,6 +861,7 @@ class JsonEditorApp extends FormApplication {
 
         const currencies = foundry.utils.deepClone(existing.currencies ?? {});
         this._mergeCurrencyOverrides(html, cfg, currencies);
+        const experience = collectExperienceForm(html, cfg, existing, getCurrentDnd5eLevelingMode());
 
         const numerics = {};
         html.querySelectorAll(".sc-numeric-field").forEach(input => {
@@ -625,6 +923,7 @@ class JsonEditorApp extends FormApplication {
         if (errors.length > 0) { ui.notifications.warn(`Исправьте ${errors.length} ошибок в ключах перед сохранением.`); return; }
 
         const result = { ...existing, ...numerics };
+        delete result.maxLevel;
         if (Object.keys(abilities).length)   result.abilities   = abilities;   else delete result.abilities;
         if (Object.keys(skills).length)      result.skills      = skills;      else delete result.skills;
         if (Object.keys(weaponTypes).length) result.weaponTypes = weaponTypes; else delete result.weaponTypes;
@@ -632,11 +931,26 @@ class JsonEditorApp extends FormApplication {
         if (Object.keys(damageTypes).length) result.damageTypes = damageTypes; else delete result.damageTypes;
         if (Object.keys(languages).length)   result.languages   = languages;   else delete result.languages;
         if (Object.keys(currencies).length)  result.currencies  = currencies;  else delete result.currencies;
+        result.experience = experience;
+        const sourceExperience = existing.experience ?? {
+            tableMode: "standard",
+            maxLevel: existing.maxLevel ?? cfg.maxLevel ?? 20,
+            epicBoonInterval: cfg.epicBoonInterval ?? 30000,
+        };
+        const experienceMigration = buildExperienceMigration(cfg, sourceExperience, experience);
 
         const confirmed = await confirmReloadAfterSave(MODULE_ID, loc);
         if (!confirmed) return;
 
         console.log(`[${MODULE_ID}] Saving customizations:`, result);
+        const migrationResult = await migrateCharacterExperience(experienceMigration);
+        if (migrationResult.updated) {
+            ui.notifications.info(`Обновлено значение опыта у персонажей: ${migrationResult.updated}.`);
+        }
+
+        if (game.settings.settings.has("dnd5e.levelingMode") && getCurrentDnd5eLevelingMode() !== experience.levelingMode) {
+            await game.settings.set("dnd5e", "levelingMode", experience.levelingMode);
+        }
         await setSetting("customizationJson", result);
         ui.notifications.info(loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.saved`));
         await waitForReload();
@@ -791,6 +1105,11 @@ let ORIGINAL_SYSTEM_CONFIG = {};
 
 Hooks.on("init", () => { onPostInit(); });
 
+Hooks.on("renderCharacterActorSheet", patchAbstractExperienceSheet);
+Hooks.on("renderActorSheetV2", patchAbstractExperienceSheet);
+Hooks.on("renderActorSheet", patchAbstractExperienceSheet);
+Hooks.on("preUpdateActor", scaleExternalExperienceUpdate);
+
 function onPostInit() {
     registerSettings();
     const configKey    = getSetting("configKey");
@@ -803,6 +1122,9 @@ function onPostInit() {
 
     const ORIGINAL_TRACKABLE_ATTRIBUTES =[...(systemConfig.trackableAttributes ?? [])];
     const customizations = foundry.utils.deepClone(getSetting("customizationJson") ?? {});
+    const experienceCustomization = foundry.utils.deepClone(customizations.experience ?? null);
+    delete customizations.experience;
+    delete customizations.maxLevel;
 
     const customDamageTypes = {};
     if (customizations.damageTypes) {
@@ -815,6 +1137,7 @@ function onPostInit() {
     const runtimeCustomizations = stripRuntimeMetadata(customizations);
     const merged = foundry.utils.mergeObject(systemConfig, runtimeCustomizations);
     if (merged.trackableAttributes) merged.trackableAttributes = ORIGINAL_TRACKABLE_ATTRIBUTES;
+    applyExperienceCustomization(merged, experienceCustomization);
 
     for (const [key, val] of Object.entries(customDamageTypes)) {
         merged.damageTypes[key] = {

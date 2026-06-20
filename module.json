@@ -2,7 +2,7 @@
   "title": "System Customizer",
   "description": "Customize your game system to your liking.",
   "id": "dnd5e-system-customizer",
-  "version": "13.2.2",
+  "version": "13.3.0",
   "authors": [
     {
       "name": "MaxKoffing",
@@ -56,7 +56,12 @@
   "packs": [],
   "url": "",
   "relationships": {
-    "systems": []
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system"
+      }
+    ]
   },
   "compatibility": {
     "minimum": "13",

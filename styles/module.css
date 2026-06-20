@@ -349,6 +349,176 @@ code.sc-key {
   line-height: 1.4;
 }
 
+.sc-experience-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.sc-experience-panel {
+  display: grid;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.sc-panel-title {
+  color: #ffd700;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.14);
+  padding-bottom: 6px;
+}
+
+.sc-experience-status {
+  margin: 12px 16px 0;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sc-experience-status[hidden] {
+  display: none;
+}
+
+.sc-experience-status strong {
+  color: #ffd700;
+  margin-right: 4px;
+}
+
+.sc-experience-status--noxp {
+  background: rgba(106, 159, 181, 0.12);
+  border: 1px solid rgba(106, 159, 181, 0.35);
+  color: #c4d6df;
+}
+
+.sc-experience-status--migration {
+  background: rgba(255, 193, 7, 0.10);
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  color: #d8c48a;
+}
+
+.sc-experience-disabled,
+.sc-experience-inactive {
+  opacity: 0.48;
+}
+
+.sc-experience-disabled {
+  filter: grayscale(0.25);
+}
+
+.sc-experience-disabled input,
+.sc-experience-disabled select,
+.sc-experience-disabled button,
+.sc-experience-inactive input,
+.sc-experience-inactive select,
+.sc-experience-inactive button {
+  cursor: not-allowed;
+}
+
+.sc-experience-generated .sc-xp-value {
+  opacity: 0.65;
+}
+
+.sc-field {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.sc-field span {
+  color: #ffd700;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sc-field .sc-field-help {
+  color: #8a7a65;
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.sc-field input,
+.sc-field select {
+  width: 100%;
+  min-height: 32px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 5px;
+  color: #f0e6d2;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  font-family: 'Signika', sans-serif;
+}
+
+.sc-field select {
+  height: 32px;
+}
+
+.sc-field input:focus,
+.sc-field select:focus {
+  outline: none;
+  border-color: rgba(255, 215, 0, 0.6);
+}
+
+.sc-field select option {
+  background: #1a1a2e;
+  color: #f0e6d2;
+}
+
+.sc-field select option:checked {
+  background: #1f4f99;
+  color: #fff;
+}
+
+.sc-input-unit,
+.sc-xp-value-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-input-unit span,
+.sc-xp-value-wrap span {
+  color: #ffd700;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 14px;
+}
+
+.sc-experience-note,
+.sc-muted {
+  color: #8a7a65;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+#sc-table-experience {
+  margin-top: 4px;
+}
+
+#sc-table-experience input[readonly] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sc-percent-experience-sheet .xp-label .sc-xp-percent-sign {
+  margin-left: 2px;
+}
+
+.sc-percent-experience-sheet .xp-label .max + .sc-xp-percent-sign {
+  margin-left: 2px;
+}
+
 /* ── Футер ── */
 .sc-footer {
   display: flex;
