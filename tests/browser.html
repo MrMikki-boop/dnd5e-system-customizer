@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>System Customizer DOM regression checks</title>
+<h1>System Customizer DOM regression checks</h1>
+<p id="status">Running…</p>
+<ol id="results"></ol>
+<div id="fixtures"></div>
+<script type="module">
+import { hidePlayerCustomizations } from "../scripts/visibility.js";
+const fixture = document.querySelector("#fixtures");
+const results = document.querySelector("#results");
+let passed = 0, failed = 0;
+const check = (name, condition) => {
+    const li = document.createElement("li");
+    li.textContent = `${condition ? "PASS" : "FAIL"}: ${name}`;
+    results.append(li);
+    condition ? passed++ : failed++;
+};
+try {
+    fixture.innerHTML = `<form class="dnd5e2">
+        <ol><li id="language"><input type="checkbox" name="system.traits.languages.value.common" checked>Common</li>
+        <li id="damage"><input type="checkbox" name="system.traits.dr.value.void" checked>Void</li></ol>
+        <select name="system.type.value"><option value="simpleM">Simple</option><option value="custom" selected>Custom</option></select>
+        <select name="system.damage.base.types"><option value="fire">Fire</option><option value="void" selected>Void</option></select>
+        <div class="ability-score" data-ability="str">Strength</div>
+        <ul><li data-key="arc" id="skill"><proficiency-cycle type="skill" name="system.skills.arc.value" value="1"></proficiency-cycle>Arcana</li>
+        <li data-key="arc" id="unrelated">Unrelated item with the same key</li></ul>
+        <div class="pills-group"><h3><span class="roboto-upper">DND5E.Languages</span></h3><ul><li class="pill" id="pill"><span class="label">Common</span></li></ul></div>
+        <ul class="characteristics"><li id="alignment"><label><span class="label">DND5E.Alignment</span><span class="value">Lawful good</span></label></li></ul>
+    </form>`;
+    const form = fixture.querySelector("form");
+    const custom = { abilities: { str: { hidden: true } }, skills: { arc: { hidden: true } },
+        languages: { standard: { children: { common: { label: "Common", hidden: true, allowedUsers: ["allowed"] } } } },
+        damageTypes: { void: { label: "Void", hidden: true } }, weaponTypes: { custom: { label: "Custom", hidden: true } },
+        alignments: { lg: { label: "Lawful good", hidden: true } } };
+    hidePlayerCustomizations({ document: { type: "weapon" } }, form, custom, {}, "player", s => s);
+    const invisible = selector => getComputedStyle(form.querySelector(selector)).display === "none";
+    check("nested language row hidden", invisible("#language"));
+    check("custom damage resistance hidden", invisible("#damage"));
+    check("ability and skill hidden", invisible(".ability-score") && invisible("#skill"));
+    check("unrelated matching key remains visible", !invisible("#unrelated"));
+    check("readonly language pill hidden", invisible("#pill"));
+    check("readonly alignment hidden", invisible("#alignment"));
+    check("weapon and damage choices hidden", invisible('option[value="custom"]') && invisible('option[value="void"]'));
+    check("selected hidden labels are not exposed by collapsed selects", invisible('[name="system.type.value"]') && invisible('[name="system.damage.base.types"]'));
+    const data = new FormData(form);
+    check("checked language preserved on form submission", data.get("system.traits.languages.value.common") === "on");
+    check("checked resistance preserved on form submission", data.get("system.traits.dr.value.void") === "on");
+    check("selected weapon and damage preserved", data.get("system.type.value") === "custom" && data.get("system.damage.base.types") === "void");
+    const allowed = document.createElement("form");
+    allowed.className = "dnd5e2";
+    allowed.innerHTML = '<li><input name="system.traits.languages.value.common" type="checkbox" checked></li>';
+    fixture.append(allowed);
+    hidePlayerCustomizations({}, allowed, custom, {}, "allowed", s => s);
+    check("allowed player sees nested language", getComputedStyle(allowed.querySelector("li")).display !== "none");
+    hidePlayerCustomizations({ document: { type: "weapon" } }, form, custom, {}, "player", s => s);
+    check("repeated render does not remove values", new FormData(form).get("system.traits.languages.value.common") === "on");
+} catch (error) { check(error.stack, false); }
+document.querySelector("#status").textContent = `${passed} passed, ${failed} failed`;
+</script>
