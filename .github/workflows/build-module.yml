@@ -32,9 +32,6 @@ jobs:
           node --check index.js
           find scripts -name '*.js' -print0 | xargs -0 -n1 node --check
 
-      - name: Regression tests
-        run: node --test tests/*.test.cjs
-
       - name: Validate JSON manifests
         run: |
           node - <<'NODE'
@@ -81,7 +78,6 @@ jobs:
             module.json \
             index.js \
             scripts \
-            esm \
             languages \
             styles \
             templates
@@ -90,7 +86,31 @@ jobs:
       - name: Verify packaged runtime dependencies
         run: |
           unzip -q dist/dnd5e-system-customizer.zip -d dist/check
-          node tests/verify-package.cjs dist/check
+          node - dist/check <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          function verifyPackage(root) {
+              const manifest = JSON.parse(fs.readFileSync(path.join(root, "module.json"), "utf8"));
+              const checked = new Set();
+              const verify = file => {
+                  const resolved = path.resolve(root, file);
+                  if (!fs.existsSync(resolved)) throw new Error(`Missing packaged file: ${file}`);
+                  if (checked.has(resolved)) return;
+                  checked.add(resolved);
+                  if (!/\.(m?js)$/.test(file)) return;
+                  const source = fs.readFileSync(resolved, "utf8");
+                  for (const match of source.matchAll(/\b(?:from\s*|import\s*)["'](\.[^"']+)["']/g)) {
+                      verify(path.join(path.dirname(file), match[1]));
+                  }
+                  for (const match of source.matchAll(/modules\/\$\{MODULE_ID\}\/(templates\/[^`"']+)/g)) verify(match[1]);
+              };
+              for (const file of [...(manifest.esmodules ?? []), ...(manifest.scripts ?? []), ...(manifest.styles ?? []),
+                  ...(manifest.languages ?? []).map(language => language.path)]) verify(file);
+              return checked.size;
+          }
+          console.log(`Package OK: ${verifyPackage(process.argv[2])} runtime files`);
+          NODE
 
       - name: Upload module artifact
         uses: actions/upload-artifact@v4

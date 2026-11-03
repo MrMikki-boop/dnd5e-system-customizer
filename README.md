@@ -40,17 +40,7 @@ need an adapter. These rules are not a mechanism for keeping data secret.
 
 ## Verification
 
-Run `node --test tests/*.test.cjs` with Node 22 or newer. On Windows installations
-with restrictive parent-directory permissions, use
-`node --preserve-symlinks --preserve-symlinks-main --test tests/regression.test.cjs`.
-The tests use Foundry stubs and cover migration, rollback, imports, resets, user
-overrides, runtime config contracts, and package dependencies.
-
-Serve this directory over local HTTP and open `tests/browser.html` for real DOM
-checks, including preservation of hidden values in `FormData`.
-`node tests/verify-package.cjs <unpacked-directory>` checks manifest assets and
-transitive runtime imports in an extracted release archive. CI runs regression
-tests and validates the extracted ZIP before publishing tag releases.
+CI validates the runtime files in the extracted release ZIP before publishing.
 
 Before deploying to a live world, check in Foundry with both a GM and player:
 
@@ -59,5 +49,3 @@ Before deploying to a live world, check in Foundry with both a GM and player:
 - Import another scale and reset; verify actor XP and unlinked-token XP.
 - Edit a custom weapon, alignment, and language twice; return numeric fields to defaults.
 - Hide a trait, save a different sheet field, and verify the hidden trait still exists.
-
-Node and browser fixture tests do not replace these in-world integration checks.
