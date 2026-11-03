@@ -1,5 +1,12 @@
 {
     "dnd5e-system-customizer": {
+        "errors": {
+            "saveFailed": "Changes could not be saved. Previous experience and settings have been restored. See the console for details.",
+            "recoveryPending": "An experience migration is pending recovery. XP changes and customization saves are paused. Reload as the active GM to retry recovery; see the console if it fails.",
+            "recovered": "Interrupted customization was rolled back. Reloading the previous settings.",
+            "invalidImport": "Invalid customization file. No changes were saved.",
+            "activeGM": "Save system customizations from the active GM client to prevent concurrent experience migrations."
+        },
         "settings": {
             "menu": {
                 "name": "D&D 5e System Customizer",
@@ -26,7 +33,7 @@
             "save": "Save Changes",
             "reloadConfirm": {
                 "title": "Save changes?",
-                "content": "The page will reload after saving so system changes can take effect.",
+                "content": "Changing the experience scale converts character XP. Connected clients will reload after saving so system changes can take effect.",
                 "yes": "Save and Reload",
                 "no": "Cancel",
                 "saved": "System customization saved. The page will reload."

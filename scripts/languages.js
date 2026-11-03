@@ -26,7 +26,7 @@ function getEntryLabel(value, fallback, loc) {
 }
 
 function getLanguageOverride(overrides, path) {
-    return foundry.utils.getProperty(overrides, path.split(".").join(".children.")) ?? {};
+    return foundry.utils.getProperty(overrides, path.split(".").join(".children."));
 }
 
 export function buildLanguageSections(cfg, custom, loc) {
@@ -43,7 +43,7 @@ export function buildLanguageSections(cfg, custom, loc) {
                 languages.push(...flattenLanguageChildren(value.children, childOverrides, groupKey, childPath));
                 continue;
             }
-            const ov = getLanguageOverride(childOverrides, childPath.join("."));
+            const ov = getLanguageOverride(childOverrides, childPath.join(".")) ?? {};
             languages.push({
                 group: groupKey,
                 sourceGroup: groupKey,

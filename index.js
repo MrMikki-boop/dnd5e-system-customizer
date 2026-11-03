@@ -17,6 +17,9 @@ import {
 } from "./scripts/experience.js";
 import { buildLanguageSections, getDirectChildrenKeys, mergeLanguageGroupOverrides, usesLanguageGroups } from "./scripts/languages.js";
 import { confirmReloadAfterSave, reloadCurrentClient, waitForReload } from "./scripts/reload-flow.js";
+import { commitCustomization, rollbackCustomization } from "./scripts/customization-transaction.js";
+import { validateCustomizations, prepareRuntimeCustomizations } from "./scripts/customizations.js";
+import { hidePlayerCustomizations } from "./scripts/visibility.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Русские подписи для всех категорий CONFIG.DND5E
@@ -107,19 +110,10 @@ function buildDamageTypeEntry(label, icon, color) {
     };
 }
 
-function stripRuntimeMetadata(value) {
-    if (!value || typeof value !== "object") return value;
-    if (Array.isArray(value)) return value.map(stripRuntimeMetadata);
-    const result = {};
-    for (const [key, val] of Object.entries(value)) {
-        if (key === "_custom" || key === "_customGroup") continue;
-        result[key] = stripRuntimeMetadata(val);
-    }
-    return result;
-}
-
 function getStoredStandardExperience(actor) {
-    const value = Number(actor?.getFlag?.(MODULE_ID, EXPERIENCE_STANDARD_FLAG));
+    const stored = actor?.getFlag?.(MODULE_ID, EXPERIENCE_STANDARD_FLAG);
+    if (stored === null || stored === undefined) return null;
+    const value = Number(stored);
     return Number.isFinite(value) ? value : null;
 }
 
@@ -233,63 +227,149 @@ function patchAbstractExperienceSheet(app, html) {
     }
 }
 
-async function migrateCharacterExperience(migration) {
-    if (!migration?.changed || !game.user.isGM) return { updated: 0, skipped: 0 };
+function experienceSettings(custom) {
+    return custom.experience ?? {
+        tableMode: "standard",
+        maxLevel: custom.maxLevel ?? ORIGINAL_SYSTEM_CONFIG.maxLevel ?? 20,
+        epicBoonInterval: ORIGINAL_SYSTEM_CONFIG.epicBoonInterval ?? 30000,
+    };
+}
 
-    let updated = 0;
-    let skipped = 0;
+function readExperienceState(actor) {
+    return { xp: Number(actor.system.details.xp.value), flag: getStoredStandardExperience(actor) };
+}
 
-    for (const actor of game.actors ?? []) {
-        if (actor.type !== "character") continue;
+function getRecoveryJournal() {
+    const journal = getSetting("experienceRecovery");
+    return Array.isArray(journal?.actors) ? journal : null;
+}
 
-        let nextValue = convertActorExperienceForMigration(actor, migration);
-        const storedStandardValue = getStoredStandardExperience(actor);
-        const standardValue = storedStandardValue ?? getStandardExperienceForMigration(actor, ORIGINAL_SYSTEM_CONFIG, migration);
-
-        if (migration.target.mode === "standard" && standardValue !== null) nextValue = Math.round(standardValue);
-        if (nextValue === null) {
-            skipped += 1;
-            continue;
+function getMigrationActors() {
+    const actors = new Map();
+    for (const actor of game.actors ?? []) actors.set(actor.uuid, actor);
+    // Unlinked tokens own independent actor data, including XP.
+    for (const scene of game.scenes ?? []) {
+        for (const token of scene.tokens ?? []) {
+            if (!token.actorLink && token.actor) actors.set(token.actor.uuid, token.actor);
         }
-
-        const currentValue = Number(actor.system?.details?.xp?.value);
-        if (Number.isFinite(currentValue) && Math.round(currentValue) === nextValue) continue;
-
-        const update = { "system.details.xp.value": nextValue };
-        if (isAbstractExperienceMode(migration.target.mode) && standardValue !== null) {
-            setStoredStandardExperience(update, standardValue);
-        }
-
-        await actor.update(update, { [MODULE_ID]: { experienceScale: "custom" } });
-        updated += 1;
     }
+    return [...actors.values()].filter(actor => actor.type === "character");
+}
 
-    return { updated, skipped };
+function planExperienceMigration(existing, result) {
+    const source = experienceSettings(existing);
+    const target = experienceSettings(result);
+    const migration = buildExperienceMigration(ORIGINAL_SYSTEM_CONFIG, source, target);
+    if (!migration.changed && source.tableMode === target.tableMode) return [];
+    const entries = [];
+    for (const actor of getMigrationActors()) {
+        const before = readExperienceState(actor);
+        if (!Number.isFinite(before.xp)) throw new Error(`Invalid XP: ${actor.uuid}`);
+        // Only an abstract source may own a precision cache. Ignore flags left by older versions.
+        const cached = isAbstractExperienceMode(source.tableMode) ? before.flag : null;
+        const cacheMatches = cached !== null
+            && convertStandardExperienceToConfigured(actor, ORIGINAL_SYSTEM_CONFIG, source, cached) === before.xp;
+        const standardValue = cacheMatches ? cached
+            : getStandardExperienceForMigration(actor, ORIGINAL_SYSTEM_CONFIG, migration);
+        const xp = cacheMatches
+            ? convertStandardExperienceToConfigured(actor, ORIGINAL_SYSTEM_CONFIG, target, standardValue)
+            : (migration.changed ? convertActorExperienceForMigration(actor, migration) : before.xp);
+        if (xp === null || !Number.isFinite(xp)) throw new Error(`Invalid migrated XP: ${actor.uuid}`);
+        const after = { xp, flag: isAbstractExperienceMode(target.tableMode) ? standardValue : null };
+        if (after.xp !== before.xp || after.flag !== before.flag) entries.push({ uuid: actor.uuid, before, after });
+    }
+    return entries;
+}
+
+function transactionIO() {
+    return {
+        resolveActor: uuid => fromUuid(uuid),
+        readActor: readExperienceState,
+        async writeActor(actor, state) {
+            const update = { "system.details.xp.value": state.xp };
+            if (state.flag === null) update[`flags.${MODULE_ID}.-=${EXPERIENCE_STANDARD_FLAG}`] = null;
+            else setStoredStandardExperience(update, state.flag);
+            await actor.update(update, { [MODULE_ID]: { experienceScale: "custom", migration: true } });
+            const actual = readExperienceState(actor);
+            if (actual.xp !== state.xp || actual.flag !== state.flag) throw new Error(`XP update rejected: ${actor.uuid}`);
+        },
+        writeCustomizations: value => setSetting("customizationJson", value),
+        async writeLevelingMode(value) {
+            if (game.settings.settings.has("dnd5e.levelingMode") && getCurrentDnd5eLevelingMode() !== value) {
+                await game.settings.set("dnd5e", "levelingMode", value);
+            }
+        },
+        writeJournal: value => setSetting("experienceRecovery", value ?? {}),
+    };
+}
+
+let savingCustomizations = false;
+async function saveCustomizations(result) {
+    if (!game.user.isGM || savingCustomizations) return false;
+    if (game.users.activeGM && game.users.activeGM.id !== game.user.id) {
+        ui.notifications.warn(loc(`${MODULE_ID}.errors.activeGM`));
+        return false;
+    }
+    if (getRecoveryJournal()) {
+        ui.notifications.error(loc(`${MODULE_ID}.errors.recoveryPending`));
+        return false;
+    }
+    savingCustomizations = true;
+    try {
+        validateCustomizations(result);
+        const existing = foundry.utils.deepClone(loadCustomizations());
+        const journal = {
+            customizations: existing,
+            levelingMode: getCurrentDnd5eLevelingMode(),
+            actors: planExperienceMigration(existing, result),
+        };
+        await commitCustomization(journal, {
+            customizations: result,
+            // Reset/import without a mode keeps the world's independent leveling preference.
+            levelingMode: result.experience?.levelingMode ?? journal.levelingMode,
+        }, transactionIO());
+        ui.notifications.info(loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.saved`));
+        await waitForReload();
+        reloadCurrentClient();
+        return true;
+    } catch (error) {
+        console.error(`[${MODULE_ID}] Customization failed`, error);
+        ui.notifications.error(loc(`${MODULE_ID}.errors.${getRecoveryJournal() ? "recoveryPending" : "saveFailed"}`));
+        return false;
+    } finally { savingCustomizations = false; }
 }
 
 function scaleExternalExperienceUpdate(actor, changes, options) {
-    if (options?.[MODULE_ID]?.experienceScale === "custom") return;
     if (actor?.type !== "character") return;
+    const nextValue = foundry.utils.getProperty(changes, "system.details.xp.value") ?? changes["system.details.xp.value"];
+    if (nextValue !== undefined && getRecoveryJournal() && !options?.[MODULE_ID]?.migration) {
+        ui.notifications.warn(loc(`${MODULE_ID}.errors.recoveryPending`));
+        return false;
+    }
+    if (options?.[MODULE_ID]?.experienceScale === "custom") return;
 
     const custom = loadCustomizations();
     if (!shouldScaleStandardExperienceAward(custom)) return;
 
-    const nextValue = foundry.utils.getProperty(changes, "system.details.xp.value");
     if (nextValue === undefined) return;
 
     const currentValue = Number(actor.system?.details?.xp?.value);
     const submittedValue = Number(nextValue);
     const rawStandardDelta = submittedValue - currentValue;
-    const storedStandardValue = getStoredStandardExperience(actor);
+    const stored = getStoredStandardExperience(actor);
+    const storedStandardValue = stored !== null
+        && convertStandardExperienceToConfigured(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience, stored) === currentValue
+        ? stored : null;
     const currentStandardValue = storedStandardValue ?? getStandardExperienceForConfigured(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience);
     const converted = currentStandardValue === null
         ? convertStandardAwardForAbstractExperience(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience, nextValue)
         : convertStandardExperienceToConfigured(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience, currentStandardValue + rawStandardDelta);
-    if (converted === null || converted === Number(nextValue)) return;
+    if (converted === null || !Number.isFinite(rawStandardDelta)) return;
 
-    foundry.utils.setProperty(changes, "system.details.xp.value", converted);
+    if (Object.hasOwn(changes, "system.details.xp.value")) changes["system.details.xp.value"] = converted;
+    else foundry.utils.setProperty(changes, "system.details.xp.value", converted);
     if (currentStandardValue !== null && Number.isFinite(rawStandardDelta)) {
-        setStoredStandardExperience(changes, currentStandardValue + rawStandardDelta);
+        setStoredStandardExperience(changes, Math.max(0, currentStandardValue + rawStandardDelta));
     }
     if (options) {
         options[MODULE_ID] ??= {};
@@ -922,7 +1002,9 @@ class JsonEditorApp extends FormApplication {
 
         if (errors.length > 0) { ui.notifications.warn(`Исправьте ${errors.length} ошибок в ключах перед сохранением.`); return; }
 
-        const result = { ...existing, ...numerics };
+        const result = { ...existing };
+        html.querySelectorAll(".sc-numeric-field").forEach(input => { delete result[input.dataset.key]; });
+        Object.assign(result, numerics);
         delete result.maxLevel;
         if (Object.keys(abilities).length)   result.abilities   = abilities;   else delete result.abilities;
         if (Object.keys(skills).length)      result.skills      = skills;      else delete result.skills;
@@ -932,29 +1014,9 @@ class JsonEditorApp extends FormApplication {
         if (Object.keys(languages).length)   result.languages   = languages;   else delete result.languages;
         if (Object.keys(currencies).length)  result.currencies  = currencies;  else delete result.currencies;
         result.experience = experience;
-        const sourceExperience = existing.experience ?? {
-            tableMode: "standard",
-            maxLevel: existing.maxLevel ?? cfg.maxLevel ?? 20,
-            epicBoonInterval: cfg.epicBoonInterval ?? 30000,
-        };
-        const experienceMigration = buildExperienceMigration(cfg, sourceExperience, experience);
-
         const confirmed = await confirmReloadAfterSave(MODULE_ID, loc);
         if (!confirmed) return;
-
-        console.log(`[${MODULE_ID}] Saving customizations:`, result);
-        const migrationResult = await migrateCharacterExperience(experienceMigration);
-        if (migrationResult.updated) {
-            ui.notifications.info(`Обновлено значение опыта у персонажей: ${migrationResult.updated}.`);
-        }
-
-        if (game.settings.settings.has("dnd5e.levelingMode") && getCurrentDnd5eLevelingMode() !== experience.levelingMode) {
-            await game.settings.set("dnd5e", "levelingMode", experience.levelingMode);
-        }
-        await setSetting("customizationJson", result);
-        ui.notifications.info(loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.saved`));
-        await waitForReload();
-        reloadCurrentClient();
+        await saveCustomizations(result);
     }
 
     _mergeSimpleOverrides(html, cfg, cfgKey, tableSelector, target, hasLabelProp = false) {
@@ -963,11 +1025,15 @@ class JsonEditorApp extends FormApplication {
         html.querySelectorAll(`${tableSelector} tr[data-key]`).forEach(row => {
             const key       = row.dataset.key;
             const orig      = src[key];
-            if (!orig) return;
             const newLabel  = row.querySelector(`input[name="${cfgKey}.${key}.label"]`)?.value?.trim();
             const origLabel = loc(hasLabelProp ? (orig?.label ?? orig) : (typeof orig === "string" ? orig : orig?.label ?? key));
             const hidden    = row.querySelector(`input[name="${cfgKey}.${key}.hidden"]`)?.checked ?? false;
             const allowedUsers = getArray(row.querySelector(`input[name="${cfgKey}.${key}.allowedUsers"]`)?.value);
+
+            if (!orig) {
+                if (target[key]?._custom) target[key] = { ...target[key], label: newLabel || target[key].label || key, hidden, allowedUsers };
+                return;
+            }
 
             if ((newLabel && newLabel !== origLabel) || hidden || allowedUsers.length > 0) {
                 target[key] = { ...(target[key] ?? {}), label: newLabel || origLabel, hidden, allowedUsers };
@@ -1030,9 +1096,7 @@ class JsonEditorApp extends FormApplication {
             yes: () => true, no: () => false, defaultYes: false,
         });
         if (!confirmed) return;
-        await setSetting("customizationJson", {});
-        ui.notifications.info("Настройки сброшены. Перезагрузите страницу.");
-        this.close();
+        await saveCustomizations({});
     }
 
     async ExportToJson() {
@@ -1047,14 +1111,17 @@ class JsonEditorApp extends FormApplication {
             buttons: {
                 import: {
                     icon: '<i class="fas fa-file-import"></i>', label: "Импортировать",
-                    callback: (html) => {
+                    callback: async (html) => {
                         const form = html.find("form")[0];
                         if (!form.data.files.length) return ui.notifications.error("Файл не выбран!");
-                        readTextFromFile(form.data.files[0]).then((json) => {
-                            setSetting("customizationJson", JSON.parse(json));
-                            ui.notifications.info("Настройки импортированы. Перезагрузите страницу.");
-                            this.close();
-                        });
+                        try {
+                            const result = JSON.parse(await readTextFromFile(form.data.files[0]));
+                            validateCustomizations(result);
+                            if (await confirmReloadAfterSave(MODULE_ID, loc)) await saveCustomizations(result);
+                        } catch (error) {
+                            console.error(`[${MODULE_ID}] Invalid import`, error);
+                            ui.notifications.error(loc(`${MODULE_ID}.errors.invalidImport`));
+                        }
                     },
                 },
                 no: { icon: '<i class="fas fa-times"></i>', label: "Отмена" },
@@ -1086,6 +1153,14 @@ function registerSettings() {
 
     registerSettingsArray({
         customizationJson: { scope: "world", config: false, type: Object, default: {} },
+        experienceRecovery: { scope: "world", config: false, type: Object, default: {}, onChange: async journal => {
+            // Other connected clients must rebuild CONFIG after the commit, never midway through migration.
+            if (Array.isArray(journal?.actors) || !game.ready || savingCustomizations) return;
+            if (JSON.stringify(loadCustomizations()) === loadedCustomizations) return;
+            ui.notifications.info(loc(`${MODULE_ID}.CustomizerApp.reloadConfirm.saved`));
+            await waitForReload();
+            reloadCurrentClient();
+        } },
         configKey: { name: `${MODULE_ID}.settings.configKey.name`, hint: `${MODULE_ID}.settings.configKey.hint`, scope: "world", config: true, type: String, default: defaultConfigKey },
     });
 
@@ -1102,6 +1177,7 @@ function registerSettingsArray(s)    { for (const [k, v] of Object.entries(s)) g
 const MODULE_ID = "dnd5e-system-customizer";
 let ORIGINAL_CONFIG        = {};
 let ORIGINAL_SYSTEM_CONFIG = {};
+let loadedCustomizations = "{}";
 
 Hooks.on("init", () => { onPostInit(); });
 
@@ -1109,6 +1185,14 @@ Hooks.on("renderCharacterActorSheet", patchAbstractExperienceSheet);
 Hooks.on("renderActorSheetV2", patchAbstractExperienceSheet);
 Hooks.on("renderActorSheet", patchAbstractExperienceSheet);
 Hooks.on("preUpdateActor", scaleExternalExperienceUpdate);
+for (const hook of ["renderApplication", "renderApplicationV2"]) {
+    Hooks.on(hook, (app, html) => {
+        const root = getRenderedElement(html);
+        if (root && game.ready && !game.user.isGM) {
+            hidePlayerCustomizations(app, root, loadCustomizations(), ORIGINAL_SYSTEM_CONFIG, game.user.id, loc);
+        }
+    });
+}
 
 function onPostInit() {
     registerSettings();
@@ -1122,7 +1206,8 @@ function onPostInit() {
 
     const ORIGINAL_TRACKABLE_ATTRIBUTES =[...(systemConfig.trackableAttributes ?? [])];
     const customizations = foundry.utils.deepClone(getSetting("customizationJson") ?? {});
-    const experienceCustomization = foundry.utils.deepClone(customizations.experience ?? null);
+    loadedCustomizations = JSON.stringify(customizations);
+    const experienceCustomization = foundry.utils.deepClone(experienceSettings(customizations));
     delete customizations.experience;
     delete customizations.maxLevel;
 
@@ -1134,7 +1219,7 @@ function onPostInit() {
         if (Object.keys(customizations.damageTypes).length === 0) delete customizations.damageTypes;
     }
 
-    const runtimeCustomizations = stripRuntimeMetadata(customizations);
+    const runtimeCustomizations = prepareRuntimeCustomizations(customizations, systemConfig);
     const merged = foundry.utils.mergeObject(systemConfig, runtimeCustomizations);
     if (merged.trackableAttributes) merged.trackableAttributes = ORIGINAL_TRACKABLE_ATTRIBUTES;
     applyExperienceCustomization(merged, experienceCustomization);
@@ -1149,50 +1234,20 @@ function onPostInit() {
     }
 }
 
-Hooks.once("ready", () => {
-    if (game.user.isGM) return;
-
-    const configKey    = getSetting("configKey");
-    const systemConfig = foundry.utils.getProperty(window, configKey);
-    if (!systemConfig) return;
-
-    let css = "";
-    const userId = game.user.id;
-
-    if (systemConfig.abilities) {
-        for (const [key, val] of Object.entries(systemConfig.abilities)) {
-            if (val.hidden && !(val.allowedUsers ||[]).includes(userId)) {
-                css += `[data-ability="${key}"], .ability-score[data-ability="${key}"], .ability-check[data-ability="${key}"], li.ability[data-id="${key}"] { display: none !important; }\n`;
-            }
-        }
-    }
-
-    if (systemConfig.skills) {
-        for (const [key, val] of Object.entries(systemConfig.skills)) {
-            if (val.hidden && !(val.allowedUsers || []).includes(userId)) {
-                css += `[data-key="${key}"], [data-skill="${key}"], li.skill[data-key="${key}"] { display: none !important; }\n`;
-            }
-        }
-    }
-
-    const hideCategories = ["weaponTypes", "alignments", "damageTypes", "languages"];
-    for (const cat of hideCategories) {
-        if (systemConfig[cat]) {
-            for (const [key, val] of Object.entries(systemConfig[cat])) {
-                if (val.hidden && !(val.allowedUsers || []).includes(userId)) {
-                    css += `dnd5e-actor [data-damage="${key}"] { display: none !important; }\n`;
-                }
-            }
-        }
-    }
-
-    if (css) {
-        const style = document.createElement("style");
-        style.id = "dnd5e-customizer-player-hides";
-        style.innerHTML = css;
-        document.head.appendChild(style);
-        console.log(`[${MODULE_ID}] Скрытые элементы вырезаны через CSS (с учётом исключений).`);
-    }
+Hooks.once("ready", async () => {
+    if (!game.user.isGM || game.users.activeGM?.id !== game.user.id) return;
+    const journal = getRecoveryJournal();
+    if (!journal) return;
+    savingCustomizations = true;
+    try {
+        await rollbackCustomization(journal, transactionIO());
+        ui.notifications.info(loc(MODULE_ID + ".errors.recovered"));
+        await waitForReload();
+        reloadCurrentClient();
+    } catch (error) {
+        console.error("[" + MODULE_ID + "] Recovery failed", error);
+        ui.notifications.error(loc(MODULE_ID + ".errors.recoveryPending"));
+    } finally { savingCustomizations = false; }
 });
 
 export { MODULE_ID, ORIGINAL_CONFIG, ORIGINAL_SYSTEM_CONFIG };
