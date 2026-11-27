@@ -1,6 +1,17 @@
 {
     "dnd5e-system-customizer": {
+        "mechanics": {
+            "initiativeAbility": "Initiative ability",
+            "initiativeAbilityHint": "Default ability key, e.g. dex or wis. An actor's explicit initiative ability takes precedence.",
+            "initiativeFormula": "Initiative base roll",
+            "initiativeFormulaHint": "Replaces 1d20, e.g. 1d20 + 1d4 or 2d10. System bonuses are added automatically. Blank restores the default. Advantage applies to a plain leading 1d20; other formulas use their own dice rules. Fixed initiative scores are unchanged.",
+            "hitPointsAbility": "Hit point ability",
+            "hitPointsAbilityHint": "Ability key used for calculated maximum HP, level-up HP and hit die recovery, e.g. con. Manually entered maximum HP is preserved."
+        },
         "errors": {
+            "invalidMechanicsAbility": "Choose an existing ability key for initiative and hit points, such as dex or con. No changes were saved.",
+            "invalidInitiativeFormula": "Invalid initiative formula. Enter a dice formula or leave it blank. No changes were saved.",
+            "invalidExperience": "Character XP is invalid. The migration cannot be calculated; check the actors before saving.",
             "saveFailed": "Changes could not be saved. Previous experience and settings have been restored. See the console for details.",
             "recoveryPending": "An experience migration is pending recovery. XP changes and customization saves are paused. Reload as the active GM to retry recovery; see the console if it fails.",
             "recovered": "Interrupted customization was rolled back. Reloading the previous settings.",

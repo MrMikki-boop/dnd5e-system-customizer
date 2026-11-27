@@ -1,6 +1,6 @@
 <form class="sc-form" autocomplete="off">
 
-    {{!-- ═══════════════ ВКЛАДКИ ═══════════════ --}}
+    {{!-- Вкладки --}}
     <nav class="sc-tabs tabs" data-group="sc-main">
         <a class="item" data-tab="abilities"><i class="fas fa-fist-raised"></i> Характеристики</a>
         <a class="item" data-tab="skills"><i class="fas fa-running"></i> Навыки</a>
@@ -15,7 +15,7 @@
 
     <div class="sc-content">
 
-        {{!-- ═══════════ ХАРАКТЕРИСТИКИ ═══════════ --}}
+        {{!-- Характеристики --}}
         <section class="tab" data-tab="abilities" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Характеристики персонажа</div>
@@ -58,7 +58,7 @@
             <button type="button" id="sc-add-ability" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить характеристику</button>
         </section>
 
-        {{!-- ═══════════ НАВЫКИ ═══════════ --}}
+        {{!-- Навыки --}}
         <section class="tab" data-tab="skills" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Навыки</div>
@@ -107,7 +107,7 @@
             <button type="button" id="sc-add-skill" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить навык</button>
         </section>
 
-        {{!-- ═══════════ ОРУЖИЕ ═══════════ --}}
+        {{!-- Оружие --}}
         <section class="tab" data-tab="weapons" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Типы оружия</div>
@@ -146,7 +146,7 @@
             <button type="button" id="sc-add-weapon" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить тип оружия</button>
         </section>
 
-        {{!-- ═══════════ МИРОВОЗЗРЕНИЯ ═══════════ --}}
+        {{!-- Мировоззрения --}}
         <section class="tab" data-tab="alignments" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Мировоззрения</div>
@@ -185,7 +185,7 @@
             <button type="button" id="sc-add-alignment" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить мировоззрение</button>
         </section>
 
-        {{!-- ═══════════ ТИПЫ УРОНА ═══════════ --}}
+        {{!-- Типы урона --}}
         <section class="tab" data-tab="damage" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Типы урона</div>
@@ -232,7 +232,7 @@
             <button type="button" id="sc-add-damage" class="sc-add-btn"><i class="fas fa-plus"></i> Добавить тип урона</button>
         </section>
 
-        {{!-- ═══════════ ЯЗЫКИ ═══════════ --}}
+        {{!-- Языки --}}
         <section class="tab" data-tab="languages" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Языки</div>
@@ -317,7 +317,7 @@
             {{/if}}
         </section>
 
-        {{!-- ═══════════ ВАЛЮТА ═══════════ --}}
+        {{!-- Валюта --}}
         <section class="tab" data-tab="currencies" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Валюты</div>
@@ -343,11 +343,11 @@
             </table>
         </section>
 
-        {{!-- ═══════════ ОПЫТ ═══════════ --}}
+        {{!-- Опыт --}}
         <section class="tab" data-tab="experience" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Опыт и уровни</div>
-                <div class="sc-tab-hint">Настраивай таблицу опыта, режим вех и прогресс после максимального уровня. Значения применяются к CONFIG.DND5E после перезагрузки страницы.</div>
+                <div class="sc-tab-hint">Настраивай таблицу опыта, режим вех и прогресс после максимального уровня. Изменения вступят в силу после перезагрузки страницы.</div>
             </div>
 
             <div class="sc-experience-status sc-experience-status--noxp" data-xp-noxp-message {{#unless experience.isNoXp}}hidden{{/unless}}>
@@ -356,7 +356,7 @@
             </div>
 
             <div class="sc-experience-status sc-experience-status--migration" data-xp-migration-message hidden>
-                При сохранении опыт персонажей будет пересчитан с сохранением прогресса внутри текущего уровня.
+                При сохранении накопленный опыт персонажей будет пересчитан по новой шкале.
                 <span data-xp-migration-count></span>
             </div>
 
@@ -450,7 +450,7 @@
             </table>
         </section>
 
-        {{!-- ═══════════ ПАРАМЕТРЫ ═══════════ --}}
+        {{!-- Параметры --}}
         <section class="tab" data-tab="numbers" data-group="sc-main">
             <div class="sc-tab-header">
                 <div class="sc-tab-title">Числовые параметры системы</div>
@@ -469,7 +469,7 @@
 
     </div>{{!-- /sc-content --}}
 
-    {{!-- ═══════════ ФУТЕР ═══════════ --}}
+    {{!-- Футер --}}
     <footer class="sc-footer flexrow">
         <button type="submit" class="sc-btn-save">
             <i class="fas fa-floppy-disk"></i> Сохранить изменения

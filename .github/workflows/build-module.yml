@@ -1,141 +1,173 @@
-name: Build Foundry Module
+name: Build Foundry release draft
 
 on:
   push:
     branches:
       - master
-      - main
-    tags:
-      - "*"
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  validate:
-    name: Validate
+  build:
+    name: Validate and package
     runs-on: ubuntu-latest
-
+    outputs:
+      archive: ${{ steps.manifest.outputs.archive }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
-
       - name: Check JavaScript syntax
         run: |
           node --check index.js
           find scripts -name '*.js' -print0 | xargs -0 -n1 node --check
-
-      - name: Validate JSON manifests
+      - name: Validate manifest and translations
+        id: manifest
         run: |
-          node - <<'NODE'
+          node <<'NODE'
           const fs = require("node:fs");
-          const path = require("node:path");
-
-          const readJson = file => JSON.parse(fs.readFileSync(file, "utf8"));
-          const manifest = readJson("module.json");
-          const required = ["id", "title", "version", "esmodules", "styles", "manifest", "download"];
-
-          for (const key of required) {
-            if (manifest[key] === undefined || manifest[key] === "") {
-              throw new Error(`module.json is missing required field: ${key}`);
-            }
+          const m = JSON.parse(fs.readFileSync("module.json", "utf8"));
+          if (!/^[a-z][a-z0-9-]*$/.test(m.id)) throw new Error("Invalid module ID");
+          if (!/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(m.version)) throw new Error("Invalid module version");
+          const repo = `https://github.com/${process.env.GITHUB_REPOSITORY}`;
+          const archive = `${m.id}.zip`;
+          if (m.manifest !== `${repo}/releases/latest/download/module.json`) throw new Error("Incorrect manifest URL");
+          if (m.download !== `${repo}/releases/download/v${m.version}/${archive}`) throw new Error("Incorrect download URL");
+          if (!m.title || !Array.isArray(m.esmodules) || !m.esmodules.length) throw new Error("Missing title or entrypoints");
+          for (const language of m.languages ?? []) {
+            JSON.parse(fs.readFileSync(language.path, "utf8"));
           }
-
-          if (!Array.isArray(manifest.esmodules) || !manifest.esmodules.includes("index.js")) {
-            throw new Error("module.json must include index.js in esmodules");
-          }
-
-          for (const language of manifest.languages ?? []) {
-            if (!language.path) throw new Error(`Language entry ${language.lang ?? "<unknown>"} has no path`);
-            readJson(language.path);
-          }
-
           for (const file of fs.readdirSync("languages").filter(f => f.endsWith(".json"))) {
-            readJson(path.join("languages", file));
+            JSON.parse(fs.readFileSync(`languages/${file}`, "utf8"));
           }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `archive=${archive}\n`);
           NODE
-
-  package:
-    name: Package
-    runs-on: ubuntu-latest
-    needs: validate
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Create release archive
+        env:
+          ARCHIVE: ${{ steps.manifest.outputs.archive }}
         run: |
           mkdir -p dist
-          zip -r "dist/dnd5e-system-customizer.zip" \
-            module.json \
-            index.js \
-            scripts \
-            languages \
-            styles \
-            templates
+          zip -qr "dist/$ARCHIVE" module.json README.md index.js scripts languages styles templates
           cp module.json dist/module.json
-
       - name: Verify packaged runtime dependencies
+        env:
+          ARCHIVE: ${{ steps.manifest.outputs.archive }}
         run: |
-          unzip -q dist/dnd5e-system-customizer.zip -d dist/check
-          node - dist/check <<'NODE'
+          unzip -q "dist/$ARCHIVE" -d dist/check
+          node <<'NODE'
           const fs = require("node:fs");
           const path = require("node:path");
-
-          function verifyPackage(root) {
-              const manifest = JSON.parse(fs.readFileSync(path.join(root, "module.json"), "utf8"));
-              const checked = new Set();
-              const verify = file => {
-                  const resolved = path.resolve(root, file);
-                  if (!fs.existsSync(resolved)) throw new Error(`Missing packaged file: ${file}`);
-                  if (checked.has(resolved)) return;
-                  checked.add(resolved);
-                  if (!/\.(m?js)$/.test(file)) return;
-                  const source = fs.readFileSync(resolved, "utf8");
-                  for (const match of source.matchAll(/\b(?:from\s*|import\s*)["'](\.[^"']+)["']/g)) {
-                      verify(path.join(path.dirname(file), match[1]));
-                  }
-                  for (const match of source.matchAll(/modules\/\$\{MODULE_ID\}\/(templates\/[^`"']+)/g)) verify(match[1]);
-              };
-              for (const file of [...(manifest.esmodules ?? []), ...(manifest.scripts ?? []), ...(manifest.styles ?? []),
-                  ...(manifest.languages ?? []).map(language => language.path)]) verify(file);
-              return checked.size;
+          const root = path.resolve("dist/check");
+          const manifestBytes = fs.readFileSync("dist/module.json");
+          if (!manifestBytes.equals(fs.readFileSync(path.join(root, "module.json")))) {
+            throw new Error("Packaged and standalone manifests differ");
           }
-          console.log(`Package OK: ${verifyPackage(process.argv[2])} runtime files`);
+          const m = JSON.parse(manifestBytes);
+          const checked = new Set();
+          function verify(file) {
+            const resolved = path.resolve(root, file);
+            if (!resolved.startsWith(root + path.sep)) throw new Error(`Path outside package: ${file}`);
+            if (!fs.statSync(resolved).isFile()) throw new Error(`Missing packaged file: ${file}`);
+            if (checked.has(resolved)) return;
+            checked.add(resolved);
+            if (!/\.m?js$/.test(file)) return;
+            const source = fs.readFileSync(resolved, "utf8");
+            for (const match of source.matchAll(/\b(?:from\s*|import\s*)["'](\.[^"']+)["']/g)) {
+              verify(path.join(path.dirname(file), match[1]));
+            }
+            for (const match of source.matchAll(/modules\/\$\{MODULE_ID\}\/(templates\/[^`"']+)/g)) verify(match[1]);
+          }
+          for (const file of ["README.md", ...(m.esmodules ?? []), ...(m.scripts ?? []), ...(m.styles ?? []),
+            ...(m.languages ?? []).map(language => language.path)]) verify(file);
+          console.log(`Package OK: ${checked.size} files`);
           NODE
-
-      - name: Upload module artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: dnd5e-system-customizer
+          name: module-package
           path: |
             dist/module.json
-            dist/dnd5e-system-customizer.zip
+            dist/${{ steps.manifest.outputs.archive }}
+          if-no-files-found: error
 
-  release:
-    name: Publish GitHub Release Assets
+  draft:
+    name: Prepare release draft
+    needs: build
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    needs: package
-    if: startsWith(github.ref, 'refs/tags/')
-
+    permissions:
+      contents: write
+    concurrency:
+      group: module-release-draft
+      cancel-in-progress: false
     steps:
-      - name: Download module artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: dnd5e-system-customizer
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: module-package
           path: dist
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/module.json
-            dist/dnd5e-system-customizer.zip
+      - name: Create tag and prepare draft assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: ${{ needs.build.outputs.archive }}
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+          const m = JSON.parse(fs.readFileSync("dist/module.json", "utf8"));
+          const repo = process.env.GITHUB_REPOSITORY;
+          const tag = `v${m.version}`;
+          const sha = process.env.GITHUB_SHA;
+          const gh = args => execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+          async function read(path, allowMissing = false) {
+            const response = await fetch(`https://api.github.com/repos/${repo}/${path}`, {
+              headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: "application/vnd.github+json" }
+            });
+            if (allowMissing && response.status === 404) return null;
+            if (!response.ok) throw new Error(`GitHub API ${response.status}: ${path}`);
+            return response.json();
+          }
+          (async () => {
+            let release;
+            for (let page = 1; ; page++) {
+              const releases = await read(`releases?per_page=100&page=${page}`);
+              release = releases.find(r => r.tag_name === tag);
+              if (release || releases.length < 100) break;
+            }
+            if (release && !release.draft) {
+              console.log(`${tag} is already published; increment module.json version for the next release.`);
+              return;
+            }
+            const ref = await read(`git/ref/tags/${tag}`, true);
+            if (ref) {
+              let object = ref.object;
+              while (object.type === "tag") object = (await read(`git/tags/${object.sha}`)).object;
+              if (object.type !== "commit" || object.sha !== sha) {
+                throw new Error(`${tag} points to another commit. Bump the version or build from the tagged commit.`);
+              }
+            } else {
+              if (release) throw new Error(`${tag} has a draft without a tag. Verify its source commit before retrying.`);
+              gh(["api", `repos/${repo}/git/refs`, "--method", "POST", "-f", `ref=refs/tags/${tag}`, "-f", `sha=${sha}`]);
+            }
+            const assets = ["dist/module.json", `dist/${process.env.ARCHIVE}`];
+            if (release) {
+              const current = await read(`releases/${release.id}`);
+              if (!current.draft) {
+                console.log(`${tag} was published during this run; assets left unchanged.`);
+                return;
+              }
+              if (current.tag_name !== tag) throw new Error("The draft tag changed during this run");
+              gh(["release", "upload", tag, ...assets, "--repo", repo, "--clobber"]);
+            } else {
+              gh(["release", "create", tag, ...assets, "--repo", repo, "--verify-tag", "--draft", "--title", tag, "--generate-notes"]);
+            }
+            console.log(`Prepared draft ${tag} from ${sha}. Publish it manually after review.`);
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE

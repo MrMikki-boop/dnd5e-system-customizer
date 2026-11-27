@@ -1,14 +1,26 @@
 // Keep a durable undo record until both documents and settings have been saved.
 // Foundry does not provide transactions spanning these document types.
+export function experienceStateMatches(current, expected) {
+    if (!expected.delta) return current.xp === expected.xp && current.flag === expected.flag;
+    // A base actor update changes inherited values without changing the token.
+    // Compare local overrides to detect actual edits to a synthetic actor.
+    return current.delta && ["xp", "flag"].every(key =>
+        Object.hasOwn(current.delta, key) === Object.hasOwn(expected.delta, key)
+        && current.delta[key] === expected.delta[key]);
+}
+
 export async function rollbackCustomization(journal, io) {
     const errors = [];
-    for (const entry of [...journal.actors].reverse()) {
+    // New journals restore bases before deltas, so inherited values are correct
+    // when verifying tokens. Retain the old order for older recovery records.
+    const entries = journal.actors.some(entry => entry.before.delta) ? journal.actors : [...journal.actors].reverse();
+    for (const entry of entries) {
         try {
             const actor = await io.resolveActor(entry.uuid);
             if (!actor) throw new Error(`Missing actor: ${entry.uuid}`);
             const current = io.readActor(actor);
-            if (current.xp === entry.before.xp && current.flag === entry.before.flag) continue;
-            if (current.xp !== entry.after.xp || current.flag !== entry.after.flag) {
+            if (experienceStateMatches(current, entry.before)) continue;
+            if (!experienceStateMatches(current, entry.after)) {
                 throw new Error(`Experience changed outside migration: ${entry.uuid}`);
             }
             await io.writeActor(actor, entry.before);
@@ -31,7 +43,7 @@ export async function commitCustomization(journal, target, io) {
             const actor = await io.resolveActor(entry.uuid);
             if (!actor) throw new Error(`Missing actor: ${entry.uuid}`);
             const current = io.readActor(actor);
-            if (current.xp !== entry.before.xp || current.flag !== entry.before.flag) {
+            if (!experienceStateMatches(current, entry.before)) {
                 throw new Error(`Experience changed before migration: ${entry.uuid}`);
             }
             await io.writeActor(actor, entry.after);

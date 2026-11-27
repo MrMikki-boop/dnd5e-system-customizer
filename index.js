@@ -12,18 +12,18 @@ import {
     getStandardExperienceForMigration,
     isAbstractExperienceMode,
     isPercentExperienceMode,
+    matchesStandardExperienceCache,
     percentToExperienceValue,
     shouldScaleStandardExperienceAward,
 } from "./scripts/experience.js";
 import { buildLanguageSections, getDirectChildrenKeys, mergeLanguageGroupOverrides, usesLanguageGroups } from "./scripts/languages.js";
 import { confirmReloadAfterSave, reloadCurrentClient, waitForReload } from "./scripts/reload-flow.js";
-import { commitCustomization, rollbackCustomization } from "./scripts/customization-transaction.js";
+import { commitCustomization, rollbackCustomization, experienceStateMatches } from "./scripts/customization-transaction.js";
 import { validateCustomizations, prepareRuntimeCustomizations } from "./scripts/customizations.js";
 import { hidePlayerCustomizations } from "./scripts/visibility.js";
+import { applyMechanicsCustomization, registerMechanicsCustomization, validateMechanicsCustomization } from "./scripts/mechanics.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Русские подписи для всех категорий CONFIG.DND5E
-// ─────────────────────────────────────────────────────────────────────────────
+// Подсказки характеристик и навыков.
 const ABILITY_HINTS = {
     str: "Физическая мощь — атаки рукопашным, таскать грузы, ломать вещи",
     dex: "Скорость и точность — уклонение, стрельба, ловкость рук",
@@ -58,9 +58,7 @@ const DEFAULT_DAMAGE_ICON  = "systems/dnd5e/icons/svg/damage/bludgeoning.svg";
 const DEFAULT_DAMAGE_COLOR = "#888888";
 const EXPERIENCE_STANDARD_FLAG = "experienceStandardValue";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Вспомогательные функции
-// ─────────────────────────────────────────────────────────────────────────────
 function loadCustomizations() {
     return getSetting("customizationJson") ?? {};
 }
@@ -236,7 +234,17 @@ function experienceSettings(custom) {
 }
 
 function readExperienceState(actor) {
-    return { xp: Number(actor.system.details.xp.value), flag: getStoredStandardExperience(actor) };
+    if (actor.isToken) actor = actor.token.actor;
+    const state = { xp: Number(actor.system.details.xp.value), flag: getStoredStandardExperience(actor) };
+    if (actor.isToken) {
+        const delta = actor.token.delta.toObject();
+        state.delta = {};
+        const xp = foundry.utils.getProperty(delta, "system.details.xp.value");
+        const flag = foundry.utils.getProperty(delta, `flags.${MODULE_ID}.${EXPERIENCE_STANDARD_FLAG}`);
+        if (xp !== undefined) state.delta.xp = xp;
+        if (flag !== undefined) state.delta.flag = flag;
+    }
+    return state;
 }
 
 function getRecoveryJournal() {
@@ -247,7 +255,7 @@ function getRecoveryJournal() {
 function getMigrationActors() {
     const actors = new Map();
     for (const actor of game.actors ?? []) actors.set(actor.uuid, actor);
-    // Unlinked tokens own independent actor data, including XP.
+    // Unlinked tokens may inherit XP and flags or override either independently.
     for (const scene of game.scenes ?? []) {
         for (const token of scene.tokens ?? []) {
             if (!token.actorLink && token.actor) actors.set(token.actor.uuid, token.actor);
@@ -260,15 +268,16 @@ function planExperienceMigration(existing, result) {
     const source = experienceSettings(existing);
     const target = experienceSettings(result);
     const migration = buildExperienceMigration(ORIGINAL_SYSTEM_CONFIG, source, target);
-    if (!migration.changed && source.tableMode === target.tableMode) return [];
+    const upgradeConversion = isAbstractExperienceMode(source.tableMode) && Number(source.conversionVersion ?? 0) < 2;
+    if (!migration.changed && source.tableMode === target.tableMode && !upgradeConversion) return [];
     const entries = [];
+    const projected = new Map();
     for (const actor of getMigrationActors()) {
         const before = readExperienceState(actor);
         if (!Number.isFinite(before.xp)) throw new Error(`Invalid XP: ${actor.uuid}`);
         // Only an abstract source may own a precision cache. Ignore flags left by older versions.
         const cached = isAbstractExperienceMode(source.tableMode) ? before.flag : null;
-        const cacheMatches = cached !== null
-            && convertStandardExperienceToConfigured(actor, ORIGINAL_SYSTEM_CONFIG, source, cached) === before.xp;
+        const cacheMatches = cached !== null && matchesStandardExperienceCache(actor, ORIGINAL_SYSTEM_CONFIG, source, cached);
         const standardValue = cacheMatches ? cached
             : getStandardExperienceForMigration(actor, ORIGINAL_SYSTEM_CONFIG, migration);
         const xp = cacheMatches
@@ -276,7 +285,19 @@ function planExperienceMigration(existing, result) {
             : (migration.changed ? convertActorExperienceForMigration(actor, migration) : before.xp);
         if (xp === null || !Number.isFinite(xp)) throw new Error(`Invalid migrated XP: ${actor.uuid}`);
         const after = { xp, flag: isAbstractExperienceMode(target.tableMode) ? standardValue : null };
-        if (after.xp !== before.xp || after.flag !== before.flag) entries.push({ uuid: actor.uuid, before, after });
+        if (before.delta) {
+            const base = actor.token.baseActor;
+            const baseAfter = projected.get(base.uuid) ?? readExperienceState(base);
+            after.delta = {};
+            if (Object.hasOwn(before.delta, "xp") || after.xp !== baseAfter.xp) after.delta.xp = after.xp;
+            if (after.flag !== null && (Object.hasOwn(before.delta, "flag") || after.flag !== baseAfter.flag)) {
+                after.delta.flag = after.flag;
+            } else if (after.flag === null && baseAfter.flag !== null) after.delta.flag = null;
+        }
+        projected.set(actor.uuid, after);
+        if (after.xp !== before.xp || after.flag !== before.flag || !experienceStateMatches(before, after)) {
+            entries.push({ uuid: actor.uuid, before, after });
+        }
     }
     return entries;
 }
@@ -286,12 +307,33 @@ function transactionIO() {
         resolveActor: uuid => fromUuid(uuid),
         readActor: readExperienceState,
         async writeActor(actor, state) {
-            const update = { "system.details.xp.value": state.xp };
-            if (state.flag === null) update[`flags.${MODULE_ID}.-=${EXPERIENCE_STANDARD_FLAG}`] = null;
-            else setStoredStandardExperience(update, state.flag);
-            await actor.update(update, { [MODULE_ID]: { experienceScale: "custom", migration: true } });
+            const options = { [MODULE_ID]: { experienceScale: "custom", migration: true } };
+            if (state.delta) {
+                const update = {};
+                const current = readExperienceState(actor);
+                for (const [key, path] of [["xp", "system.details.xp.value"], ["flag", `flags.${MODULE_ID}.${EXPERIENCE_STANDARD_FLAG}`]]) {
+                    const ownsValue = Object.hasOwn(state.delta, key);
+                    if (ownsValue === Object.hasOwn(current.delta, key) && state.delta[key] === current.delta[key]) continue;
+                    if (ownsValue) update[`delta.${path}`] = state.delta[key];
+                    else {
+                        const parts = path.split(".");
+                        const leaf = parts.pop();
+                        update[`delta.${parts.join(".")}.-=${leaf}`] = null;
+                    }
+                }
+                // Token updates can remove delta overrides without deleting a
+                // required field from the synthetic actor during validation.
+                if (Object.keys(update).length) await actor.token.update(update, options);
+            } else {
+                const update = { "system.details.xp.value": state.xp };
+                if (state.flag === null) update[`flags.${MODULE_ID}.-=${EXPERIENCE_STANDARD_FLAG}`] = null;
+                else setStoredStandardExperience(update, state.flag);
+                await actor.update(update, options);
+            }
             const actual = readExperienceState(actor);
-            if (actual.xp !== state.xp || actual.flag !== state.flag) throw new Error(`XP update rejected: ${actor.uuid}`);
+            if (actual.xp !== state.xp || actual.flag !== state.flag || !experienceStateMatches(actual, state)) {
+                throw new Error(`XP update rejected: ${actor.uuid}`);
+            }
         },
         writeCustomizations: value => setSetting("customizationJson", value),
         async writeLevelingMode(value) {
@@ -317,6 +359,14 @@ async function saveCustomizations(result) {
     savingCustomizations = true;
     try {
         validateCustomizations(result);
+        if (isAbstractExperienceMode(result.experience?.tableMode)) {
+            result = { ...result, experience: { ...result.experience, conversionVersion: 2 } };
+        }
+        const mechanicsError = validateMechanicsCustomization(result, ORIGINAL_SYSTEM_CONFIG);
+        if (mechanicsError) {
+            ui.notifications.error(loc(`${MODULE_ID}.errors.${mechanicsError}`));
+            return false;
+        }
         const existing = foundry.utils.deepClone(loadCustomizations());
         const journal = {
             customizations: existing,
@@ -358,7 +408,7 @@ function scaleExternalExperienceUpdate(actor, changes, options) {
     const rawStandardDelta = submittedValue - currentValue;
     const stored = getStoredStandardExperience(actor);
     const storedStandardValue = stored !== null
-        && convertStandardExperienceToConfigured(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience, stored) === currentValue
+        && matchesStandardExperienceCache(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience, stored)
         ? stored : null;
     const currentStandardValue = storedStandardValue ?? getStandardExperienceForConfigured(actor, ORIGINAL_SYSTEM_CONFIG, custom.experience);
     const converted = currentStandardValue === null
@@ -377,9 +427,7 @@ function scaleExternalExperienceUpdate(actor, changes, options) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Главный класс приложения
-// ─────────────────────────────────────────────────────────────────────────────
 class JsonEditorApp extends FormApplication {
     constructor() {
         super();
@@ -426,9 +474,9 @@ class JsonEditorApp extends FormApplication {
 
         const numerics =[
             { key: "maxAbilityScore", label: "Максимум характеристики", hint: "До какого значения может вырасти любая характеристика (обычно 20)", value: custom.maxAbilityScore ?? cfg.maxAbilityScore ?? 20, original: cfg.maxAbilityScore ?? 20, type: "number" },
-            { key: "initiativeAbility", label: "Характеристика инициативы", hint: "Какая характеристика используется для броска инициативы (обычно dex)", value: custom.initiativeAbility ?? cfg.initiativeAbility ?? "dex", original: cfg.initiativeAbility ?? "dex", type: "text" },
-            { key: "initiativeFormula", label: "Формула инициативы", hint: "Формула броска инициативы (обычно 1d20 — оставь пустым для стандартной)", value: custom.initiativeFormula ?? cfg.initiativeFormula ?? "", original: cfg.initiativeFormula ?? "", type: "text" },
-            { key: "hitPointsAbility", label: "Характеристика хитов", hint: "Модификатор какой характеристики прибавляется к хитам (обычно con)", value: custom.hitPointsAbility ?? cfg.hitPointsAbility ?? "con", original: cfg.hitPointsAbility ?? "con", type: "text" },
+            { key: "initiativeAbility", label: loc(`${MODULE_ID}.mechanics.initiativeAbility`), hint: loc(`${MODULE_ID}.mechanics.initiativeAbilityHint`), value: custom.initiativeAbility ?? custom.defaultAbilities?.initiative ?? cfg.defaultAbilities?.initiative ?? "dex", original: cfg.defaultAbilities?.initiative ?? "dex", type: "text" },
+            { key: "initiativeFormula", label: loc(`${MODULE_ID}.mechanics.initiativeFormula`), hint: loc(`${MODULE_ID}.mechanics.initiativeFormulaHint`), value: custom.initiativeFormula ?? "", original: "", type: "text" },
+            { key: "hitPointsAbility", label: loc(`${MODULE_ID}.mechanics.hitPointsAbility`), hint: loc(`${MODULE_ID}.mechanics.hitPointsAbilityHint`), value: custom.hitPointsAbility ?? custom.defaultAbilities?.hitPoints ?? cfg.defaultAbilities?.hitPoints ?? "con", original: cfg.defaultAbilities?.hitPoints ?? "con", type: "text" },
         ];
 
         return {
@@ -504,6 +552,7 @@ class JsonEditorApp extends FormApplication {
         for (const [key, val] of Object.entries(overrides)) {
             if (src[key]) continue;
             if (!val || typeof val !== "object") continue;
+            if (!val._custom) continue;
             result.push({
                 key, label: val.label ?? key, icon: val.icon ?? DEFAULT_DAMAGE_ICON,
                 isCustom: true, hidden: val.hidden ?? false, allowedUsers: (val.allowedUsers ||[]).join(",")
@@ -559,7 +608,7 @@ class JsonEditorApp extends FormApplication {
             btn.closest("tr, .sc-language-section")?.remove();
         });
 
-        // ── ЛОГИКА ОКНА ДОСТУПОВ (Белый список) ──
+        // Доступ игроков к скрытым элементам.
         html.addEventListener("click", async (e) => {
             const btn = e.target.closest(".sc-access-btn");
             if (!btn) return;
@@ -714,35 +763,24 @@ class JsonEditorApp extends FormApplication {
         if (!message) return;
 
         const existing = loadCustomizations();
-        const sourceExperience = existing.experience ?? {
-            tableMode: "standard",
-            maxLevel: existing.maxLevel ?? ORIGINAL_SYSTEM_CONFIG.maxLevel ?? 20,
-            epicBoonInterval: ORIGINAL_SYSTEM_CONFIG.epicBoonInterval ?? 30000,
-        };
+        const sourceExperience = experienceSettings(existing);
         const nextExperience = collectExperienceForm(html, ORIGINAL_SYSTEM_CONFIG, existing, getCurrentDnd5eLevelingMode());
         const migration = buildExperienceMigration(ORIGINAL_SYSTEM_CONFIG, sourceExperience, nextExperience);
-        const count = this._countExperienceMigrationUpdates(migration);
+        let count;
+        try {
+            count = planExperienceMigration(existing, { ...existing, experience: nextExperience }).length;
+        } catch (error) {
+            message.hidden = false;
+            if (countNode) countNode.textContent = loc(`${MODULE_ID}.errors.invalidExperience`);
+            return;
+        }
 
-        message.hidden = !migration.changed;
+        message.hidden = !migration.changed && count === 0;
         if (countNode) {
             countNode.textContent = count
                 ? `Будет обновлено персонажей: ${count}.`
                 : "Персонажи не требуют изменения XP.";
         }
-    }
-
-    _countExperienceMigrationUpdates(migration) {
-        if (!migration?.changed) return 0;
-
-        let count = 0;
-        for (const actor of game.actors ?? []) {
-            const nextValue = convertActorExperienceForMigration(actor, migration);
-            if (nextValue === null) continue;
-
-            const currentValue = Number(actor.system?.details?.xp?.value);
-            if (!Number.isFinite(currentValue) || Math.round(currentValue) !== nextValue) count += 1;
-        }
-        return count;
     }
 
     _addRow(html, type, groupKey = null) {
@@ -793,7 +831,7 @@ class JsonEditorApp extends FormApplication {
                 tr.innerHTML = `
         <td><input type="text" name="customDamage[].key" placeholder="ключ" style="width:70px"></td>
         <td><input type="text" name="customDamage[].label" placeholder="Название" style="width:130px"></td>
-        <td class="sc-icon-cell sc-td-center"> <!-- Добавили класс центрирования -->
+        <td class="sc-icon-cell sc-td-center">
           <div class="sc-icon-row">
             <img class="sc-icon-preview" src="${DEFAULT_DAMAGE_ICON}" title="${DEFAULT_DAMAGE_ICON}">
             <input type="hidden" name="customDamage[].icon" class="sc-icon-path" value="${DEFAULT_DAMAGE_ICON}">
@@ -826,7 +864,7 @@ class JsonEditorApp extends FormApplication {
             <div class="sc-language-section-title">
                 <code class="sc-key">${key}</code>
                 <input type="hidden" name="languageGroups[].key" value="${key}">
-                <input type="text" name="languageGroups[].label" value="Авторские" placeholder="Название плашки">
+                <input type="text" class="sc-language-group-label" name="languageGroups[].label" value="Авторские" placeholder="Название плашки">
                 <button type="button" class="sc-delete-row" title="Удалить"><i class="fas fa-trash"></i></button>
             </div>
             <table id="sc-table-languages-${key}" class="sc-table sc-table-languages">
@@ -922,8 +960,16 @@ class JsonEditorApp extends FormApplication {
                 return;
             }
             const origLabel = loc(srcVal?.label ?? srcVal);
-            const changed = (newLabel && newLabel !== origLabel) || newIcon || hidden || allowedUsers.length > 0;
-            if (changed) damageTypes[key] = { ...(damageTypes[key] ?? {}), label: newLabel || origLabel, icon: newIcon || srcVal.icon || DEFAULT_DAMAGE_ICON, hidden, allowedUsers };
+            const override = { ...(damageTypes[key] ?? {}) };
+            if (newLabel && newLabel !== origLabel) override.label = newLabel;
+            else delete override.label;
+            if (newIcon && newIcon !== (srcVal.icon || DEFAULT_DAMAGE_ICON)) override.icon = newIcon;
+            else delete override.icon;
+            if (hidden) override.hidden = true;
+            else delete override.hidden;
+            if (allowedUsers.length) override.allowedUsers = allowedUsers;
+            else delete override.allowedUsers;
+            if (Object.keys(override).length) damageTypes[key] = override;
             else delete damageTypes[key];
         });
         const domDamageKeys = getDomKeys(html, "#sc-table-damage");
@@ -1003,6 +1049,13 @@ class JsonEditorApp extends FormApplication {
         if (errors.length > 0) { ui.notifications.warn(`Исправьте ${errors.length} ошибок в ключах перед сохранением.`); return; }
 
         const result = { ...existing };
+        // The editor owns these defaults even if an older import used native keys.
+        if (existing.defaultAbilities) {
+            result.defaultAbilities = foundry.utils.deepClone(existing.defaultAbilities);
+            delete result.defaultAbilities.initiative;
+            delete result.defaultAbilities.hitPoints;
+            if (!Object.keys(result.defaultAbilities).length) delete result.defaultAbilities;
+        }
         html.querySelectorAll(".sc-numeric-field").forEach(input => { delete result[input.dataset.key]; });
         Object.assign(result, numerics);
         delete result.maxLevel;
@@ -1179,7 +1232,7 @@ let ORIGINAL_CONFIG        = {};
 let ORIGINAL_SYSTEM_CONFIG = {};
 let loadedCustomizations = "{}";
 
-Hooks.on("init", () => { onPostInit(); });
+Hooks.once("init", () => { onPostInit(); });
 
 Hooks.on("renderCharacterActorSheet", patchAbstractExperienceSheet);
 Hooks.on("renderActorSheetV2", patchAbstractExperienceSheet);
@@ -1223,6 +1276,8 @@ function onPostInit() {
     const merged = foundry.utils.mergeObject(systemConfig, runtimeCustomizations);
     if (merged.trackableAttributes) merged.trackableAttributes = ORIGINAL_TRACKABLE_ATTRIBUTES;
     applyExperienceCustomization(merged, experienceCustomization);
+    applyMechanicsCustomization(merged, customizations);
+    registerMechanicsCustomization(MODULE_ID, customizations);
 
     for (const [key, val] of Object.entries(customDamageTypes)) {
         merged.damageTypes[key] = {

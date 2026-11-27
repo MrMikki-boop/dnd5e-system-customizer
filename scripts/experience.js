@@ -71,53 +71,20 @@ function sameTable(left, right) {
     return left.every((value, index) => value === right[index]);
 }
 
-function getLevelBounds(table, level, maxLevel) {
-    const characterLevel = clampInt(level, 1, 1, maxLevel);
-    const minIndex = Math.min(characterLevel - 1, table.length - 1);
-    const min = table[minIndex] ?? 0;
-
-    if (characterLevel >= maxLevel) return { min, max: Infinity };
-
-    const maxIndex = Math.min(characterLevel, table.length - 1);
-    const max = table[maxIndex] ?? min + 1;
-    return { min, max: Math.max(max, min + 1) };
-}
-
-function normalizeLegacyPointValue(value, level, source, bounds) {
-    if (source.mode !== "points") return value;
-    if (!Number.isFinite(bounds.max)) return value;
-    if (value >= bounds.min) return value;
-
-    const legacyCurrent = value - Math.max(level - 1, 0);
-    const required = bounds.max - bounds.min;
-    if (legacyCurrent < 0 || legacyCurrent > required) return value;
-    return bounds.min + legacyCurrent;
-}
-
-function migrationRatio(value, bounds, epicBoonInterval) {
-    if (Number.isFinite(bounds.max)) {
-        return Math.max(0, (value - bounds.min) / (bounds.max - bounds.min));
-    }
-
-    const interval = clampInt(epicBoonInterval, 30000, 1, 100000000);
-    return Math.max(0, (value - bounds.min) / interval);
-}
-
-function valueFromMigrationRatio(ratio, bounds, epicBoonInterval) {
-    if (Number.isFinite(bounds.max)) {
-        return Math.round(bounds.min + ((bounds.max - bounds.min) * Math.max(0, ratio)));
-    }
-
-    const interval = clampInt(epicBoonInterval, 30000, 1, 100000000);
-    return Math.round(bounds.min + (Math.max(0, ratio) * interval));
-}
-
-function convertExperienceValueBetweenScales(value, level, source, target) {
-    const sourceBounds = getLevelBounds(source.table, level, source.maxLevel);
-    const targetBounds = getLevelBounds(target.table, level, target.maxLevel);
-    const normalizedValue = normalizeLegacyPointValue(value, level, source, sourceBounds);
-    const ratio = migrationRatio(normalizedValue, sourceBounds, source.epicBoonInterval);
-    return valueFromMigrationRatio(ratio, targetBounds, target.epicBoonInterval);
+function convertExperienceValueBetweenScales(value, source, target) {
+    // Tables contain cumulative thresholds. Class levels can lag behind XP or
+    // be granted without XP, so they must not choose the conversion segment.
+    let sourceIndex = 0;
+    while (sourceIndex + 1 < source.table.length && value >= source.table[sourceIndex + 1]) sourceIndex += 1;
+    const sourceStep = sourceIndex + 1 < source.table.length
+        ? source.table[sourceIndex + 1] - source.table[sourceIndex]
+        : source.epicBoonInterval;
+    const progress = sourceIndex + Math.max(0, value - source.table[sourceIndex]) / sourceStep;
+    const targetIndex = Math.min(Math.floor(progress), target.table.length - 1);
+    const targetStep = targetIndex + 1 < target.table.length
+        ? target.table[targetIndex + 1] - target.table[targetIndex]
+        : target.epicBoonInterval;
+    return Math.round(target.table[targetIndex] + (progress - targetIndex) * targetStep);
 }
 
 export function resolveExperienceTable(cfg, experience = {}) {
@@ -145,6 +112,16 @@ export function resolveExperienceTable(cfg, experience = {}) {
     }
 
     return normalizeAscending(base, maxLevel);
+}
+
+function standardExperienceScale(cfg) {
+    const maxLevel = clampInt(cfg.maxLevel, 20, 1, 100);
+    return {
+        table: resolveExperienceTable(cfg, { tableMode: "standard", maxLevel }),
+        maxLevel,
+        epicBoonInterval: clampInt(cfg.epicBoonInterval, 30000, 1, 100000000),
+        mode: "standard",
+    };
 }
 
 export function buildExperienceData(cfg, custom, currentLevelingMode = "xpBoons") {
@@ -252,8 +229,7 @@ export function convertActorExperienceForMigration(actor, migration) {
     const value = Number(xp?.value);
     if (!Number.isFinite(value)) return null;
 
-    const level = clampInt(actor.system?.details?.level, 1, 1, 100);
-    const nextValue = convertExperienceValueBetweenScales(value, level, migration.source, migration.target);
+    const nextValue = convertExperienceValueBetweenScales(value, migration.source, migration.target);
 
     return Number.isFinite(nextValue) ? Math.max(0, nextValue) : null;
 }
@@ -272,14 +248,8 @@ export function getStandardExperienceForMigration(actor, cfg, migration) {
     const value = Number(actor.system?.details?.xp?.value);
     if (!Number.isFinite(value)) return null;
 
-    const level = clampInt(actor.system?.details?.level, 1, 1, 100);
-    const standard = {
-        table: resolveExperienceTable(cfg, { tableMode: "standard", maxLevel: migration.source.maxLevel }),
-        maxLevel: migration.source.maxLevel,
-        epicBoonInterval: clampInt(cfg.epicBoonInterval, 30000, 1, 100000000),
-        mode: "standard",
-    };
-    const standardValue = convertExperienceValueBetweenScales(value, level, migration.source, standard);
+    const standard = standardExperienceScale(cfg);
+    const standardValue = convertExperienceValueBetweenScales(value, migration.source, standard);
     return Number.isFinite(standardValue) ? Math.max(0, standardValue) : null;
 }
 
@@ -291,13 +261,7 @@ export function convertStandardExperienceToConfigured(actor, cfg, experience, st
 
     const maxLevel = clampInt(experience?.maxLevel, cfg.maxLevel ?? 20, 1, 100);
     const epicBoonInterval = clampInt(experience?.epicBoonInterval, cfg.epicBoonInterval ?? 30000, 1, 100000000);
-    const level = clampInt(actor.system?.details?.level, 1, 1, 100);
-    const standard = {
-        table: resolveExperienceTable(cfg, { tableMode: "standard", maxLevel }),
-        maxLevel,
-        epicBoonInterval: clampInt(cfg.epicBoonInterval, 30000, 1, 100000000),
-        mode: "standard",
-    };
+    const standard = standardExperienceScale(cfg);
     const configured = {
         table: resolveExperienceTable(cfg, { ...experience, maxLevel }),
         maxLevel,
@@ -305,8 +269,28 @@ export function convertStandardExperienceToConfigured(actor, cfg, experience, st
         mode: experience?.tableMode || "standard",
     };
 
-    const configuredValue = convertExperienceValueBetweenScales(value, level, standard, configured);
+    const configuredValue = convertExperienceValueBetweenScales(value, standard, configured);
     return Number.isFinite(configuredValue) ? Math.max(0, configuredValue) : null;
+}
+
+export function matchesStandardExperienceCache(actor, cfg, experience, stored) {
+    if (!Number.isFinite(stored)) return false;
+    const value = Number(actor.system?.details?.xp?.value);
+    if (convertStandardExperienceToConfigured(actor, cfg, experience, stored) === value) return true;
+    if (Number(experience?.conversionVersion ?? 0) >= 2) return false;
+
+    // Recognize precision flags written by the previous, class-level-based
+    // conversion. The next save/award rewrites XP using cumulative thresholds.
+    const maxLevel = clampInt(experience?.maxLevel, cfg.maxLevel ?? 20, 1, 100);
+    const index = clampInt(actor.system?.details?.level, 1, 1, maxLevel) - 1;
+    const source = resolveExperienceTable(cfg, { tableMode: "standard", maxLevel });
+    const target = resolveExperienceTable(cfg, { ...experience, maxLevel });
+    const sourceStep = index + 1 < maxLevel ? source[index + 1] - source[index]
+        : clampInt(cfg.epicBoonInterval, 30000, 1, 100000000);
+    const targetStep = index + 1 < maxLevel ? target[index + 1] - target[index]
+        : clampInt(experience?.epicBoonInterval, cfg.epicBoonInterval ?? 30000, 1, 100000000);
+    const legacyValue = Math.round(target[index] + Math.max(0, (stored - source[index]) / sourceStep) * targetStep);
+    return legacyValue === value;
 }
 
 export function getStandardExperienceForConfigured(actor, cfg, experience) {
@@ -317,21 +301,15 @@ export function getStandardExperienceForConfigured(actor, cfg, experience) {
 
     const maxLevel = clampInt(experience?.maxLevel, cfg.maxLevel ?? 20, 1, 100);
     const epicBoonInterval = clampInt(experience?.epicBoonInterval, cfg.epicBoonInterval ?? 30000, 1, 100000000);
-    const level = clampInt(actor.system?.details?.level, 1, 1, 100);
     const configured = {
         table: resolveExperienceTable(cfg, { ...experience, maxLevel }),
         maxLevel,
         epicBoonInterval,
         mode: experience?.tableMode || "standard",
     };
-    const standard = {
-        table: resolveExperienceTable(cfg, { tableMode: "standard", maxLevel }),
-        maxLevel,
-        epicBoonInterval: clampInt(cfg.epicBoonInterval, 30000, 1, 100000000),
-        mode: "standard",
-    };
+    const standard = standardExperienceScale(cfg);
 
-    const standardValue = convertExperienceValueBetweenScales(value, level, configured, standard);
+    const standardValue = convertExperienceValueBetweenScales(value, configured, standard);
     return Number.isFinite(standardValue) ? Math.max(0, standardValue) : null;
 }
 
@@ -347,13 +325,7 @@ export function convertStandardAwardForAbstractExperience(actor, cfg, experience
 
     const maxLevel = clampInt(experience?.maxLevel, cfg.maxLevel ?? 20, 1, 100);
     const epicBoonInterval = clampInt(experience?.epicBoonInterval, cfg.epicBoonInterval ?? 30000, 1, 100000000);
-    const level = clampInt(actor.system?.details?.level, 1, 1, 100);
-    const standard = {
-        table: resolveExperienceTable(cfg, { tableMode: "standard", maxLevel }),
-        maxLevel,
-        epicBoonInterval: clampInt(cfg.epicBoonInterval, 30000, 1, 100000000),
-        mode: "standard",
-    };
+    const standard = standardExperienceScale(cfg);
     const abstract = {
         table: resolveExperienceTable(cfg, { ...experience, maxLevel }),
         maxLevel,
@@ -361,9 +333,9 @@ export function convertStandardAwardForAbstractExperience(actor, cfg, experience
         mode: experience?.tableMode || "standard",
     };
 
-    const currentStandardValue = convertExperienceValueBetweenScales(currentValue, level, abstract, standard);
+    const currentStandardValue = convertExperienceValueBetweenScales(currentValue, abstract, standard);
     const nextStandardValue = currentStandardValue + rawStandardDelta;
-    const nextAbstractValue = convertExperienceValueBetweenScales(nextStandardValue, level, standard, abstract);
+    const nextAbstractValue = convertExperienceValueBetweenScales(nextStandardValue, standard, abstract);
     return Number.isFinite(nextAbstractValue) ? Math.max(0, nextAbstractValue) : null;
 }
 
@@ -393,14 +365,12 @@ export function getCurrentLevelExperienceDisplay(actor) {
 
     const min = numberOr(xp.min, 0);
     const max = Number(xp.max);
-    let value = Number(xp.value);
+    const value = Number(xp.value);
     if (!Number.isFinite(max) || !Number.isFinite(value)) return null;
 
     const required = max - min;
     if (required <= 0) return null;
 
-    const level = clampInt(actor.system?.details?.level, 1, 1, 100);
-    value = normalizeLegacyPointValue(value, level, { mode: "points" }, { min, max });
     const current = clampInt(value - min, 0, 0, required);
     return { value: current, min: 0, max: required, actualMin: min, actualMax: max, required };
 }

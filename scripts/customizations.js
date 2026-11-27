@@ -55,7 +55,29 @@ export function prepareRuntimeCustomizations(custom, original) {
     };
     const result = {};
     for (const [key, value] of Object.entries(custom)) {
-        if (["weaponTypes", "alignments"].includes(key)) {
+        // Applied through dnd5e's real config fields and roll integration.
+        if (["initiativeAbility", "hitPointsAbility", "initiativeFormula"].includes(key)) continue;
+        // Standard status descriptions belong to the selected dnd5e rules edition.
+        // Keep old/imported settings intact, but never pin their rule references.
+        const category = key.split(".")[0];
+        if (["conditionTypes", "statusEffects"].includes(category)) {
+            if (key !== category || !isObject(value)) continue;
+            const entries = {};
+            for (const [id, entry] of Object.entries(value)) {
+                const standard = original.conditionTypes?.[id] ?? original.statusEffects?.[id];
+                if (!standard) { entries[id] = entry; continue; }
+                if (!isObject(entry) || !original[key]?.[id]) continue;
+                const { reference, description, ...override } = entry;
+                if (Object.keys(override).length) entries[id] = override;
+            }
+            result[key] = convert(entries, original[key]);
+        } else if (key === "damageTypes") {
+            // An override is not a new type. Do not resurrect entries supplied by
+            // a module which is no longer present (for example Midi-QOL's none).
+            if (!isObject(value)) continue;
+            const entries = Object.entries(value).filter(([id, entry]) => original.damageTypes?.[id] || entry?._custom);
+            result[key] = convert(Object.fromEntries(entries), original[key]);
+        } else if (["weaponTypes", "alignments"].includes(key)) {
             result[key] = Object.fromEntries(Object.entries(value).map(([id, entry]) => [id, convert(entry, original[key]?.[id], true)]));
         } else result[key] = convert(value, original[key]);
     }

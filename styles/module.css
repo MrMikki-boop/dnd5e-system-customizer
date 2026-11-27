@@ -1,9 +1,6 @@
-/* ═══════════════════════════════════════════════════
-   System Customizer — Friendly UI Styles
-   Заменяет старый module.css
-   ═══════════════════════════════════════════════════ */
+/* System Customizer */
 
-/* ── Общая обёртка окна ── */
+/* Общая обёртка окна */
 #json-editor-app .window-content {
   padding: 0;
   display: flex;
@@ -21,7 +18,7 @@
   font-family: 'Signika', sans-serif;
 }
 
-/* ── Вкладки ── */
+/* Вкладки */
 .sc-tabs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -81,7 +78,7 @@
   }
 }
 
-/* ── Содержимое вкладок ── */
+/* Содержимое вкладок */
 .sc-content {
   flex: 1;
   overflow: hidden;
@@ -99,7 +96,7 @@
   display: flex;
 }
 
-/* ── Заголовок вкладки ── */
+/* Заголовок вкладки */
 .sc-tab-header {
   padding: 12px 16px 8px;
   border-bottom: 1px solid rgba(255, 215, 0, 0.1);
@@ -120,7 +117,7 @@
   line-height: 1.5;
 }
 
-/* ── Таблица записей ── */
+/* Таблица записей */
 .sc-table {
   width: 100%;
   border-collapse: collapse;
@@ -206,7 +203,7 @@
   border-color: rgba(255, 215, 0, 0.6);
 }
 
-/* ── Ключ-бейдж ── */
+/* Ключ-бейдж */
 code.sc-key {
   font-family: 'Courier New', monospace;
   font-size: 11px;
@@ -218,7 +215,7 @@ code.sc-key {
   white-space: nowrap;
 }
 
-/* ── Поля ввода внутри таблицы ── */
+/* Поля ввода внутри таблицы */
 .sc-table input[type="text"],
 .sc-table input[type="number"],
 .sc-table select {
@@ -267,7 +264,7 @@ code.sc-key {
   text-align: center;
 }
 
-/* ── Иконка подсказки ── */
+/* Иконка подсказки */
 .sc-hint {
   color: #6a9fb5;
   font-size: 12px;
@@ -282,7 +279,7 @@ code.sc-key {
   opacity: 1;
 }
 
-/* ── Кнопка удаления строки ── */
+/* Кнопка удаления строки */
 .sc-delete-row {
   background: transparent;
   border: none;
@@ -299,7 +296,7 @@ code.sc-key {
   background: rgba(229, 57, 53, 0.1);
 }
 
-/* ── Кнопка «Добавить строку» ── */
+/* Кнопка «Добавить строку» */
 .sc-add-btn {
   margin: 8px 16px;
   background: transparent;
@@ -320,7 +317,7 @@ code.sc-key {
   background: rgba(255, 215, 0, 0.04);
 }
 
-/* ── Числовые карточки (вкладка Параметры) ── */
+/* Числовые карточки (вкладка Параметры) */
 .sc-numerics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -543,7 +540,7 @@ code.sc-key {
   margin-left: 2px;
 }
 
-/* ── Футер ── */
+/* Футер */
 .sc-footer {
   display: flex;
   gap: 10px;
